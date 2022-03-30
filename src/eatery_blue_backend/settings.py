@@ -28,6 +28,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS").split(",")
 
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # Application definition
 
@@ -116,6 +117,10 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+PASSWORD_HASHERS = [
+    'django.contrib.auth.hashers.PBKDF2PasswordHasher',
+    'accounts.hashers.PBKDF2WrappedSHA1PasswordHasher',
+]
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.0/topics/i18n/
