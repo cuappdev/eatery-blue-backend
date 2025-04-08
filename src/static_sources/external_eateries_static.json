@@ -938,57 +938,54 @@
       ],
       "diningItems": [
         {
-          "item": "Fat-Free Milk",
+          "item": "Croissant",
           "healthy": false,
-          "category": "Free Food",
-          "dietaryPreferences": [],
-          "allergens": [
-            "Dairy"
-          ]
+          "category": "General"
         },
         {
-          "item": "Chicken Caesar Wrap",
+          "item": "Coffee Cake",
           "healthy": false,
-          "category": "Free Food",
-          "dietaryPreferences": [],
-          "allergens": [
-            "Dairy",
-            "Shellfish"
-          ]
+          "category": "General"
         },
         {
-          "item": "Prosciutto & Mozzarella",
+          "item": "Filled Crossiant",
           "healthy": false,
-          "category": "Free Food",
-          "dietaryPreferences": [],
-          "allergens": [
-            "Soy",
-            "Nuts",
-            "Dairy",
-            "Shellfish"
-          ]
+          "category": "General"
+        },
+        {
+          "item": "Cookies",
+          "healthy": false,
+          "category": "General"
+        },
+        {
+          "item": "Asorted Scones",
+          "healthy": false,
+          "category": "General"
+        },
+        {
+          "item": "Bufflao Chicken Wraps",
+          "healthy": false,
+          "category": "General"
+        },
+        {
+          "item": "Turkey Sandwich",
+          "healthy": false,
+          "category": "General"
+        },
+        {
+          "item": "Italian Combo",
+          "healthy": false,
+          "category": "General"
+        },
+        {
+          "item": "Prosciutto Mozzarela",
+          "healthy": false,
+          "category": "General"
         },
         {
           "item": "Roast Beef & Asiago Cheese",
           "healthy": false,
-          "category": "Free Food",
-          "dietaryPreferences": [],
-          "allergens": [
-            "Soy",
-            "Nuts",
-            "Dairy"
-          ]
-        },
-        {
-          "item": "Roasted Turkey & Swiss",
-          "healthy": false,
-          "category": "Free Food",
-          "dietaryPreferences": [],
-          "allergens": [
-            "Soy",
-            "Nuts",
-            "Dairy"
-          ]
+          "category": "General"
         }
       ]
     }

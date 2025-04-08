@@ -63,29 +63,33 @@ class Command(BaseCommand):
         for item in freege_items:
             # item[1] is the email
             # item[4] is item name
+            # item[7] is allergens
+            # item[8] is dietary preferences
             # item[11] is if it is there
             if len(item) < 12:
                 continue
             if item[1] not in approved_emails or item[11] != "Yes":
                 continue
-
+            
             freege_dining_items.append({
                 "item": item[4].strip(),
                 "healthy": False,
                 "category": "Free Food",
+                "dietaryPreferences": item[8].split(", ") if item[8] != "N/A" else [],
+                "allergens": item[7].split(", ") if item[7] != "N/A" else [],
             })
 
-        with open(
-            "./static_sources/external_eateries.json", "w+"
-        ) as external_eateries_file:
+        with open("./static_sources/external_eateries_static.json", "r") as external_eateries_file:
             external_eateries_json = json.load(external_eateries_file)
-            for eatery in external_eateries_json["eateries"]:
-                if eatery["id"] == EateryID.FREEDGE.value:
-                    print("Updating freege external eatery")
-                    eatery["diningItems"] = freege_dining_items
-                    break
+            
+        for eatery in external_eateries_json["eateries"]:
+            if eatery["id"] == EateryID.FREEDGE.value:
+                print("Updating freege external eatery")
+                eatery["diningItems"] = freege_dining_items
+                break
 
-            json.dump(external_eateries_json, external_eateries_file, indent=2)            
+        with open("./static_sources/external_eateries.json", "w") as external_eateries_file:
+            json.dump(external_eateries_json, external_eateries_file, indent=2)           
 
     def logger_wrapper(self, command_obj, log_title, args):
         pre = int(datetime.now().timestamp())
