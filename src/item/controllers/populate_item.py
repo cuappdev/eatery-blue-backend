@@ -15,7 +15,10 @@ class PopulateItemController:
             except KeyError:
                 continue
 
-            data = {"category": category_id, "name": json_item["item"]}
+            dietary_preferences = json_item.get("dietaryPreferences", [])
+            allergens = json_item.get("allergens", [])
+            
+            data = {"category": category_id, "name": json_item["item"], "dietary_preferences": dietary_preferences, "allergens": allergens}
             item = ItemSerializer(data=data)
             if item.is_valid():
                 item.save()
@@ -29,7 +32,9 @@ class PopulateItemController:
             category_id = menu[category_name]
 
             for json_item in json_menu["items"]:
-                data = {"category": category_id, "name": json_item["item"]}
+                dietary_preferences = json_item.get("dietaryPreferences", [])
+                allergens = json_item.get("allergens", [])
+                data = {"category": category_id, "name": json_item["item"], "dietary_preferences": dietary_preferences, "allergens": allergens}
                 item = ItemSerializer(data=data)
                 if item.is_valid():
                     item.save()
