@@ -128,7 +128,7 @@ class Command(BaseCommand):
 
         json_eateries = self.get_json()
 
-        self.update_freege_external_eatery()
+        self.update_freedge_external_eatery()
     
         Event.truncate()
 
