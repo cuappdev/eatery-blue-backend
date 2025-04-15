@@ -33,18 +33,18 @@ class Command(BaseCommand):
             json_eateries = response["data"]["eateries"]
         return json_eateries
     
-    def update_freege_external_eatery(self):
+    def update_freedge_external_eatery(self):
         GOOGLE_SHEETS_API_KEY = os.environ.get("GOOGLE_SHEETS_API_KEY")
         FREEDGE_SHEET_ID = os.environ.get("FREEDGE_SHEET_ID")
         FREEDGE_APPROVED_EMAILS = os.environ.get("FREEDGE_APPROVED_EMAILS")
         if not GOOGLE_SHEETS_API_KEY:
-            print("GOOGLE_SHEETS_API_KEY not set, cannot update freege external eatery")
+            print("GOOGLE_SHEETS_API_KEY not set, cannot update freedge external eatery")
             return
         if not FREEDGE_SHEET_ID:
-            print("FREEDGE_SHEET_ID not set, cannot update freege external eatery")
+            print("FREEDGE_SHEET_ID not set, cannot update freedge external eatery")
             return
         if not FREEDGE_APPROVED_EMAILS:
-            print("FREEDGE_APPROVED_EMAILS not set, cannot update freege external eatery")
+            print("FREEDGE_APPROVED_EMAILS not set, cannot update freedge external eatery")
             return
         
         approved_emails = FREEDGE_APPROVED_EMAILS.split(",")
@@ -57,6 +57,10 @@ class Command(BaseCommand):
             return
         
         response = response.json()
+        if "values" not in response:
+            print("No values in response, cannot update freedge external eatery")
+            print(response)
+            return
         freege_items = response["values"]
         
         freege_dining_items = []
