@@ -36,7 +36,6 @@ class SnapshotFileName(Enum):
     SCHEDULE_EXCEPTION = "schedule_exception.txt"
 
 
-# Combined dictionary mapping dining IDs to both internal IDs and image URLs
 EATERY_INFO = {
     31: {
         "internal_id": EateryID.ONE_ZERO_FOUR_WEST,
@@ -176,7 +175,6 @@ EATERY_INFO = {
     }
 }
 
-# Dictionary mapping vendor names to internal IDs (keeping original)
 VENDOR_NAME_TO_INTERNAL = {
     "bearnecessities": EateryID.BEAR_NECESSITIES,
     "northstarmarketplace": EateryID.NORTH_STAR_DINING,
@@ -231,19 +229,15 @@ def get_eatery_info(id: int):
 
 def get_eatery_info_by_vendor_name(vendor_eatery_name):
     """Get both internal ID and image URL for a given vendor name"""
-    # Normalize vendor name: lowercase and remove non-alphabetic characters
     vendor_eatery_name = "".join(c.lower() for c in vendor_eatery_name if c.isalpha())
     
-    # Get the internal ID from the vendor name
     internal_id = VENDOR_NAME_TO_INTERNAL.get(vendor_eatery_name)
     
     if internal_id is not None:
-        # Find the dining ID that corresponds to this internal ID
         for dining_id, info in EATERY_INFO.items():
             if info["internal_id"] == internal_id:
                 return info
         
-        # If we can't find the eatery info, return the internal ID with default image
         return {
             "internal_id": internal_id,
             "image_url": DEFAULT_IMAGE_URL
@@ -256,7 +250,6 @@ def get_eatery_info_by_vendor_name(vendor_eatery_name):
     }
 
 
-# Legacy functions to maintain compatibility
 def dining_id_to_internal_id(id: int):
     """Convert dining ID to internal eatery ID"""
     info = get_eatery_info(id)
@@ -265,7 +258,6 @@ def dining_id_to_internal_id(id: int):
 
 def vendor_name_to_internal_id(vendor_eatery_name):
     """Convert vendor eatery name to internal eatery ID"""
-    # Normalize vendor name: lowercase and remove non-alphabetic characters
     vendor_eatery_name = "".join(c.lower() for c in vendor_eatery_name if c.isalpha())
     
     if vendor_eatery_name in VENDOR_NAME_TO_INTERNAL:
