@@ -1,5 +1,5 @@
 import json
-from eatery.util.constants import dining_id_to_internal_id, SnapshotFileName
+from eatery.util.constants import dining_id_to_internal_id, dining_id_to_image_url, SnapshotFileName
 from eatery.serializers import EaterySerializer
 from eatery.models import Eatery
 from django.core.exceptions import ObjectDoesNotExist
@@ -17,6 +17,7 @@ class PopulateEateryController:
         data = {
             "id": eatery_id,
             "name": json_eatery["name"],
+            "image_url": dining_id_to_image_url(json_eatery["id"]),
             "campus_area": json_eatery["campusArea"]["descrshort"],
             "latitude": json_eatery["latitude"],
             "longitude": json_eatery["longitude"],
