@@ -938,56 +938,67 @@
       ],
       "diningItems": [
         {
-          "item": "Fat-Free Milk",
+          "item": "Pickles",
           "healthy": false,
           "category": "Free Food",
           "dietaryPreferences": [],
+          "allergens": [
+            "N/A",
+            ""
+          ]
+        },
+        {
+          "item": "Oat Milk",
+          "healthy": false,
+          "category": "Free Food",
+          "dietaryPreferences": [
+            "Vegan"
+          ],
+          "allergens": [
+            "Oats"
+          ]
+        },
+        {
+          "item": "Chocolate Chip Cookie",
+          "healthy": false,
+          "category": "Free Food",
+          "dietaryPreferences": [
+            "Vegetarian",
+            "N/A"
+          ],
           "allergens": [
             "Dairy"
           ]
         },
         {
-          "item": "Chicken Caesar Wrap",
+          "item": "Pesto pasta",
           "healthy": false,
           "category": "Free Food",
-          "dietaryPreferences": [],
-          "allergens": [
-            "Dairy",
-            "Shellfish"
-          ]
+          "dietaryPreferences": [
+            "Vegan"
+          ],
+          "allergens": []
         },
         {
-          "item": "Prosciutto & Mozzarella",
+          "item": "Rice, South Indian cuisine",
           "healthy": false,
           "category": "Free Food",
-          "dietaryPreferences": [],
-          "allergens": [
-            "Soy",
-            "Nuts",
-            "Dairy",
-            "Shellfish"
-          ]
+          "dietaryPreferences": [
+            "Vegetarian"
+          ],
+          "allergens": []
         },
         {
-          "item": "Roast Beef & Asiago Cheese",
+          "item": "Salad & condiments",
           "healthy": false,
           "category": "Free Food",
-          "dietaryPreferences": [],
+          "dietaryPreferences": [
+            "Vegetarian",
+            "Vegan"
+          ],
           "allergens": [
             "Soy",
-            "Nuts",
-            "Dairy"
-          ]
-        },
-        {
-          "item": "Roasted Turkey & Swiss",
-          "healthy": false,
-          "category": "Free Food",
-          "dietaryPreferences": [],
-          "allergens": [
-            "Soy",
-            "Nuts",
-            "Dairy"
+            "Nuts"
           ]
         }
       ]
