@@ -188,3 +188,78 @@ def vendor_name_to_internal_id(vendor_eatery_name):
     else:
         # TODO: Add a slack notif / flag that a wait time location was not recognized
         return None
+
+def internal_id_to_image_url(id: EateryID):
+    if id == EateryID.ONE_ZERO_FOUR_WEST:
+        return "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/104-West.jpg"
+    elif id == EateryID.LIBE_CAFE:
+        return "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/Amit-Bhatia-Libe-Cafe.jpg"
+    elif id == EateryID.ATRIUM_CAFE:
+        return "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/Atrium-Cafe.jpg"
+    elif id == EateryID.BEAR_NECESSITIES:
+        return "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/Bear-Necessities.jpg"
+    elif id == EateryID.BECKER_HOUSE:
+        return "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/Becker-House-Dining.jpg"
+    elif id == EateryID.BIG_RED_BARN:
+        return "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/Big-Red-Barn.jpg"
+    elif id == EateryID.BUS_STOP_BAGELS:
+        return "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/Bug-Stop-Bagels.jpg"
+    elif id == EateryID.CAFE_JENNIE:
+        return "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/Cafe-Jennie.jpg"
+    elif id == EateryID.COOK_HOUSE:
+        return "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/Cook-House-Dining.jpg"
+    elif id == EateryID.DAIRY_BAR:
+        return "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/Cornell-Dairy-Bar.jpg"
+    elif id == EateryID.CROSSINGS_CAFE:
+        return "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/Crossings-Cafe.jpg"
+    elif id == EateryID.FRANNYS:
+        return "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/frannys.jpg"
+    elif id == EateryID.GOLDIES_CAFE:
+        return "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/Goldies-Cafe.jpg"
+    elif id == EateryID.GREEN_DRAGON:
+        return "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/Green-Dragon.jpg"
+    elif id == EateryID.HOT_DOG_CART:
+        return "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/Hot-Dog-Cart.jpg"
+    elif id == EateryID.ICE_CREAM_BIKE:
+        return "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/icecreamcart.jpg"
+    elif id == EateryID.BETHE_HOUSE:
+        return "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/Jansens-Dining.jpg"
+    elif id == EateryID.JANSENS_MARKET:
+        return "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/Jansens-Market.jpg"
+    elif id == EateryID.KEETON_HOUSE:
+        return "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/Keeton-House-Dining.jpg"
+    elif id == EateryID.MANN_CAFE:
+        return "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/Mann-Cafe.jpg"
+    elif id == EateryID.MARTHAS_CAFE:
+        return "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/Marthas-Cafe.jpg"
+    elif id == EateryID.MATTINS_CAFE:
+        return "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/Mattins-Cafe.jpg"
+    elif id == EateryID.MCCORMICKS:
+        return "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/mccormicks.jpg"
+    elif id == EateryID.NORTH_STAR_DINING:
+        return "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/North-Star.jpg"
+    elif id == EateryID.OKENSHIELDS:
+        return "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/Okenshields.jpg"
+    elif id == EateryID.RISLEY:
+        return "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/Risley-Dining.jpg"
+    elif id == EateryID.ROSE_HOUSE:
+        return "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/Rose-House-Dining.jpg"
+    elif id == EateryID.RUSTYS:
+        return "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/Rustys.jpg"
+    elif id == EateryID.STRAIGHT_FROM_THE_MARKET:
+        return "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/StraightMarket.jpg"
+    elif id == EateryID.TRILLIUM:
+        return "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/Trillium.jpg"
+    elif id == EateryID.MORRISON_DINING:
+        return "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/Morrison-Dining.jpg"
+    elif id == EateryID.NOVICKS_CAFE:
+        return "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/novicks-cafe.jpg"
+    elif id == EateryID.VET_CAFE:
+        return "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/vets-cafe.jpg"
+    elif id == EateryID.MACS_CAFE:
+        return "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/Macs-Cafe.jpg"
+    elif id == EateryID.TERRACE:
+        return "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/Terrace.jpg"
+    else:
+        print(f"Missing image url for eatery_id {id}")
+        return "https://images-prod.healthline.com/hlcmsresource/images/AN_images/health-benefits-of-apples-1296x728-feature.jpg"

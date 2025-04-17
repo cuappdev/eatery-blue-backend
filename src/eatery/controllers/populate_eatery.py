@@ -1,5 +1,5 @@
 import json
-from eatery.util.constants import dining_id_to_internal_id, SnapshotFileName
+from eatery.util.constants import dining_id_to_internal_id, internal_id_to_image_url, SnapshotFileName
 from eatery.serializers import EaterySerializer
 from eatery.models import Eatery
 from django.core.exceptions import ObjectDoesNotExist
@@ -13,10 +13,11 @@ class PopulateEateryController:
         """
         Create Eatery object from an eatery json from CornellDiningNow, and add to Eatery table.
         """
-        eatery_id = dining_id_to_internal_id(json_eatery["id"]).value
+        eatery_id = dining_id_to_internal_id(json_eatery["id"])
         data = {
-            "id": eatery_id,
+            "id": eatery_id.value,
             "name": json_eatery["name"],
+            "image_url": internal_id_to_image_url(eatery_id),
             "campus_area": json_eatery["campusArea"]["descrshort"],
             "latitude": json_eatery["latitude"],
             "longitude": json_eatery["longitude"],
@@ -37,7 +38,7 @@ class PopulateEateryController:
             "online_order_url": json_eatery["onlineOrderUrl"],
         }
         try:
-            object = Eatery.objects.get(id=int(eatery_id))
+            object = Eatery.objects.get(id=int(eatery_id.value))
         except ObjectDoesNotExist:
             """
             Create a new Eatery object
