@@ -4,6 +4,7 @@
 .envrc
 .envlocal
 .envremote
+secrets/eatery-blue-f810e-firebase-adminsdk-ds3co-7902015462.json
 
 # Hardcoded stuff
 db_snapshots/
@@ -13,6 +14,7 @@ static_sources/data.log
 __pycache__/ 
 *.py[cod]
 *$py.class
+.ruff_cache
 
 # More Python stuff
 .DS_Store
@@ -42,3 +44,4 @@ MANIFEST
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
+src/static_sources/external_eateries.json

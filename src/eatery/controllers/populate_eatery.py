@@ -1,8 +1,9 @@
 import json
-from eatery.util.constants import dining_id_to_internal_id, SnapshotFileName
+from eatery.util.constants import dining_id_to_internal_id, dining_id_to_image_url, SnapshotFileName
 from eatery.serializers import EaterySerializer
 from eatery.models import Eatery
 from django.core.exceptions import ObjectDoesNotExist
+
 
 class PopulateEateryController:
     def __init__(self):
@@ -16,6 +17,7 @@ class PopulateEateryController:
         data = {
             "id": eatery_id,
             "name": json_eatery["name"],
+            "image_url": dining_id_to_image_url(json_eatery["id"]),
             "campus_area": json_eatery["campusArea"]["descrshort"],
             "latitude": json_eatery["latitude"],
             "longitude": json_eatery["longitude"],
@@ -66,11 +68,11 @@ class PopulateEateryController:
             for line in file:
                 if len(line) > 2:
                     json_objs.append(json.loads(line))
-            
+
             for json_obj in json_objs:
                 try:
                     object = Eatery.objects.get(id=int(json_obj["id"]))
-                except object.DoesNotExist:
+                except Eatery.DoesNotExist:
                     """
                     Create a new Eatery object
                     """

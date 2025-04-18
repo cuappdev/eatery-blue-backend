@@ -3,11 +3,22 @@ from enum import Enum
 from eatery.datatype.Eatery import EateryID
 
 CORNELL_DINING_URL = "https://now.dining.cornell.edu/api/1.0/dining/eateries.json"
-CORNELL_VENDOR_URL = "https://vendor-api-extra.scl.cornell.edu/api/external/location-count"
+CORNELL_VENDOR_URL = (
+    "https://vendor-api-extra.scl.cornell.edu/api/external/location-count"
+)
 
-DAY_OF_WEEK_LIST = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+DAY_OF_WEEK_LIST = [
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday",
+]
 
 DEFAULT_IMAGE_URL = "https://images-prod.healthline.com/hlcmsresource/images/AN_images/health-benefits-of-apples-1296x728-feature.jpg"
+
 
 class SnapshotFileName(Enum):
     EATERY_STORE = "eatery_store.txt"
@@ -25,155 +36,241 @@ class SnapshotFileName(Enum):
     SCHEDULE_EXCEPTION = "schedule_exception.txt"
 
 
-def dining_id_to_internal_id(id: int):
-    if id == 31:
-        return EateryID.ONE_ZERO_FOUR_WEST
-    elif id == 7:
-        return EateryID.LIBE_CAFE
-    elif id == 8:
-        return EateryID.ATRIUM_CAFE
-    elif id == 1:
-        return EateryID.BEAR_NECESSITIES
-    elif id == 25:
-        return EateryID.BECKER_HOUSE
-    elif id == 10:
-        return EateryID.BIG_RED_BARN
-    elif id == 11:
-        return EateryID.BUS_STOP_BAGELS
-    elif id == 12:
-        return EateryID.CAFE_JENNIE
-    elif id == 26:
-        return EateryID.COOK_HOUSE
-    elif id == 14:
-        return EateryID.DAIRY_BAR
-    elif id == 41:
-        return EateryID.CROSSINGS_CAFE
-    elif id == 32:
-        return EateryID.FRANNYS
-    elif id == 16:
-        return EateryID.GOLDIES_CAFE
-    elif id == 15:
-        return EateryID.GREEN_DRAGON
-    elif id == 24:
-        return EateryID.HOT_DOG_CART
-    elif id == 34:
-        return EateryID.ICE_CREAM_BIKE
-    elif id == 27:
-        return EateryID.BETHE_HOUSE
-    elif id == 28:
-        return EateryID.JANSENS_MARKET
-    elif id == 29:
-        return EateryID.KEETON_HOUSE
-    elif id == 42:
-        return EateryID.MANN_CAFE
-    elif id == 18:
-        return EateryID.MARTHAS_CAFE
-    elif id == 19:
-        return EateryID.MATTINS_CAFE
-    elif id == 33:
-        return EateryID.MCCORMICKS
-    elif id == 3:
-        return EateryID.NORTH_STAR_DINING
-    elif id == 20:
-        return EateryID.OKENSHIELDS
-    elif id == 4:
-        return EateryID.RISLEY
-    elif id == 5:
-        return EateryID.RPCC
-    elif id == 30:
-        return EateryID.ROSE_HOUSE
-    elif id == 21:
-        return EateryID.RUSTYS
-    elif id == 13:
-        return EateryID.STRAIGHT_FROM_THE_MARKET
-    elif id == 23:
-        return EateryID.TRILLIUM
-    elif id == 43:
-        return EateryID.MORRISON_DINING
-    elif id == 44:
-        return EateryID.NOVICKS_CAFE
-    elif id == 45:
-        return EateryID.VET_CAFE
-    else:
-        print(f"Missing eatery_id {id}")
-        return None
+EATERY_INFO = {
+    31: {
+        "internal_id": EateryID.ONE_ZERO_FOUR_WEST,
+        "image_url": "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/104-West.jpg"
+    },
+    7: {
+        "internal_id": EateryID.LIBE_CAFE,
+        "image_url": "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/Amit-Bhatia-Libe-Cafe.jpg"
+    },
+    8: {
+        "internal_id": EateryID.ATRIUM_CAFE,
+        "image_url": "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/Atrium-Cafe.jpg"
+    },
+    1: {
+        "internal_id": EateryID.BEAR_NECESSITIES,
+        "image_url": "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/Bear-Necessities.jpg"
+    },
+    25: {
+        "internal_id": EateryID.BECKER_HOUSE,
+        "image_url": "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/Becker-House-Dining.jpg"
+    },
+    10: {
+        "internal_id": EateryID.BIG_RED_BARN,
+        "image_url": "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/Big-Red-Barn.jpg"
+    },
+    11: {
+        "internal_id": EateryID.BUS_STOP_BAGELS,
+        "image_url": "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/Bug-Stop-Bagels.jpg"
+    },
+    12: {
+        "internal_id": EateryID.CAFE_JENNIE,
+        "image_url": "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/Cafe-Jennie.jpg"
+    },
+    26: {
+        "internal_id": EateryID.COOK_HOUSE,
+        "image_url": "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/Cook-House-Dining.jpg"
+    },
+    14: {
+        "internal_id": EateryID.DAIRY_BAR,
+        "image_url": "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/Cornell-Dairy-Bar.jpg"
+    },
+    41: {
+        "internal_id": EateryID.CROSSINGS_CAFE,
+        "image_url": "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/Crossings-Cafe.jpg"
+    },
+    32: {
+        "internal_id": EateryID.FRANNYS,
+        "image_url": "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/frannys.jpg"
+    },
+    16: {
+        "internal_id": EateryID.GOLDIES_CAFE,
+        "image_url": "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/Goldies-Cafe.jpg"
+    },
+    15: {
+        "internal_id": EateryID.GREEN_DRAGON,
+        "image_url": "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/Green-Dragon.jpg"
+    },
+    24: {
+        "internal_id": EateryID.HOT_DOG_CART,
+        "image_url": "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/Hot-Dog-Cart.jpg"
+    },
+    34: {
+        "internal_id": EateryID.ICE_CREAM_BIKE,
+        "image_url": "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/icecreamcart.jpg"
+    },
+    27: {
+        "internal_id": EateryID.BETHE_HOUSE,
+        "image_url": "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/Jansens-Dining.jpg"
+    },
+    28: {
+        "internal_id": EateryID.JANSENS_MARKET,
+        "image_url": "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/Jansens-Market.jpg"
+    },
+    29: {
+        "internal_id": EateryID.KEETON_HOUSE,
+        "image_url": "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/Keeton-House-Dining.jpg"
+    },
+    42: {
+        "internal_id": EateryID.MANN_CAFE,
+        "image_url": "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/Mann-Cafe.jpg"
+    },
+    18: {
+        "internal_id": EateryID.MARTHAS_CAFE,
+        "image_url": "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/Marthas-Cafe.jpg"
+    },
+    19: {
+        "internal_id": EateryID.MATTINS_CAFE,
+        "image_url": "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/Mattins-Cafe.jpg"
+    },
+    33: {
+        "internal_id": EateryID.MCCORMICKS,
+        "image_url": "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/mccormicks.jpg"
+    },
+    3: {
+        "internal_id": EateryID.NORTH_STAR_DINING,
+        "image_url": "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/North-Star.jpg"
+    },
+    20: {
+        "internal_id": EateryID.OKENSHIELDS,
+        "image_url": "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/Okenshields.jpg"
+    },
+    4: {
+        "internal_id": EateryID.RISLEY,
+        "image_url": "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/Risley-Dining.jpg"
+    },
+    5: {
+        "internal_id": EateryID.RPCC,
+        "image_url": "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/Risley-Dining.jpg"
+    },
+    30: {
+        "internal_id": EateryID.ROSE_HOUSE,
+        "image_url": "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/Rose-House-Dining.jpg"
+    },
+    21: {
+        "internal_id": EateryID.RUSTYS,
+        "image_url": "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/Rustys.jpg"
+    },
+    13: {
+        "internal_id": EateryID.STRAIGHT_FROM_THE_MARKET,
+        "image_url": "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/StraightMarket.jpg"
+    },
+    23: {
+        "internal_id": EateryID.TRILLIUM,
+        "image_url": "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/Trillium.jpg"
+    },
+    43: {
+        "internal_id": EateryID.MORRISON_DINING,
+        "image_url": "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/Morrison-Dining.jpg"
+    },
+    44: {
+        "internal_id": EateryID.NOVICKS_CAFE,
+        "image_url": "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/novicks-cafe.jpg"
+    },
+    45: {
+        "internal_id": EateryID.VET_CAFE,
+        "image_url": "https://raw.githubusercontent.com/cuappdev/assets/master/eatery/eatery-images/vets-cafe.jpg"
+    }
+}
+
+VENDOR_NAME_TO_INTERNAL = {
+    "bearnecessities": EateryID.BEAR_NECESSITIES,
+    "northstarmarketplace": EateryID.NORTH_STAR_DINING,
+    "jansensmarket": EateryID.JANSENS_MARKET,
+    "stockinghallcafe": EateryID.DAIRY_BAR,
+    "stockinghall": EateryID.DAIRY_BAR,
+    "marthas": EateryID.MARTHAS_CAFE,
+    "cafejennie": EateryID.CAFE_JENNIE,
+    "goldiescafe": EateryID.GOLDIES_CAFE,
+    "alicecookhouse": EateryID.COOK_HOUSE,
+    "carlbeckerhouse": EateryID.BECKER_HOUSE,
+    "duffield": EateryID.MATTINS_CAFE,
+    "greendragon": EateryID.GREEN_DRAGON,
+    "trillium": EateryID.TRILLIUM,
+    "olinlibecafe": EateryID.LIBE_CAFE,
+    "statlerterrace": EateryID.TERRACE,
+    "busstopbagels": EateryID.BUS_STOP_BAGELS,
+    "kosher": EateryID.ONE_ZERO_FOUR_WEST,
+    "jansensatbethehouse": EateryID.BETHE_HOUSE,
+    "keetonhouse": EateryID.KEETON_HOUSE,
+    "rpme": EateryID.RPCC,
+    "rosehouse": EateryID.ROSE_HOUSE,
+    "risley": EateryID.RISLEY,
+    "frannysft": EateryID.FRANNYS,
+    "mccormicks": EateryID.MCCORMICKS,
+    "sage": EateryID.ATRIUM_CAFE,
+    "straightmarket": EateryID.STRAIGHT_FROM_THE_MARKET,
+    "crossingscafe": EateryID.CROSSINGS_CAFE,
+    "okenshields": EateryID.OKENSHIELDS,
+    "bigredbarn": EateryID.BIG_RED_BARN,
+    "rustys": EateryID.RUSTYS,
+    "manncafe": EateryID.MANN_CAFE,
+    "statlermacs": EateryID.MACS_CAFE,
+    "morrisondining": EateryID.MORRISON_DINING,
+    "morrison": EateryID.MORRISON_DINING,
+    "novickscafe": EateryID.NOVICKS_CAFE,
+    "Vet College Cafe": EateryID.VET_CAFE,
+}
 
 
-# Our transactions vendor
-def vendor_name_to_internal_id(vendor_eatery_name):
+def get_eatery_info(id: int):
+    """Get both internal ID and image URL for a given dining ID"""
+    if id in EATERY_INFO:
+        return EATERY_INFO[id]
+    
+    print(f"Missing eatery_id {id}")
+    return {
+        "internal_id": None,
+        "image_url": DEFAULT_IMAGE_URL
+    }
+
+
+def get_eatery_info_by_vendor_name(vendor_eatery_name):
+    """Get both internal ID and image URL for a given vendor name"""
     vendor_eatery_name = "".join(c.lower() for c in vendor_eatery_name if c.isalpha())
-    if vendor_eatery_name == "bearnecessities":
-        return EateryID.BEAR_NECESSITIES
-    elif vendor_eatery_name == "northstarmarketplace":
-        return EateryID.NORTH_STAR_DINING
-    elif vendor_eatery_name == "jansensmarket":
-        return EateryID.JANSENS_MARKET
-    elif (
-        vendor_eatery_name == "stockinghallcafe" or vendor_eatery_name == "stockinghall"
-    ):
-        return EateryID.DAIRY_BAR
-    elif vendor_eatery_name == "marthas":
-        return EateryID.MARTHAS_CAFE
-    elif vendor_eatery_name == "cafejennie":
-        return EateryID.CAFE_JENNIE
-    elif vendor_eatery_name == "goldiescafe":
-        return EateryID.GOLDIES_CAFE
-    elif vendor_eatery_name == "alicecookhouse":
-        return EateryID.COOK_HOUSE
-    elif vendor_eatery_name == "carlbeckerhouse":
-        return EateryID.BECKER_HOUSE
-    elif vendor_eatery_name == "duffield":
-        return EateryID.MATTINS_CAFE
-    elif vendor_eatery_name == "greendragon":
-        return EateryID.GREEN_DRAGON
-    elif vendor_eatery_name == "trillium":
-        return EateryID.TRILLIUM
-    elif vendor_eatery_name == "olinlibecafe":
-        return EateryID.LIBE_CAFE
-    elif vendor_eatery_name == "carolscafe":
-        return EateryID.CAROLS_CAFE
-    elif vendor_eatery_name == "statlerterrace":
-        return EateryID.TERRACE
-    elif vendor_eatery_name == "busstopbagels":
-        return EateryID.BUS_STOP_BAGELS
-    elif vendor_eatery_name == "kosher":
-        return EateryID.ONE_ZERO_FOUR_WEST
-    elif vendor_eatery_name == "jansensatbethehouse":
-        return EateryID.BETHE_HOUSE
-    elif vendor_eatery_name == "keetonhouse":
-        return EateryID.KEETON_HOUSE
-    elif vendor_eatery_name == "rpme":
-        return EateryID.RPCC
-    elif vendor_eatery_name == "rosehouse":
-        return EateryID.ROSE_HOUSE
-    elif vendor_eatery_name == "risley":
-        return EateryID.RISLEY
-    elif vendor_eatery_name == "frannysft":
-        return EateryID.FRANNYS
-    elif vendor_eatery_name == "mccormicks":
-        return EateryID.MCCORMICKS
-    elif vendor_eatery_name == "sage":
-        return EateryID.ATRIUM_CAFE
-    elif vendor_eatery_name == "straightmarket":
-        return EateryID.STRAIGHT_FROM_THE_MARKET
-    elif vendor_eatery_name == "crossingscafe":
-        return EateryID.CROSSINGS_CAFE
-    elif vendor_eatery_name == "okenshields":
-        return EateryID.OKENSHIELDS
-    elif vendor_eatery_name == "bigredbarn":
-        return EateryID.BIG_RED_BARN
-    elif vendor_eatery_name == "rustys":
-        return EateryID.RUSTYS
-    elif vendor_eatery_name == "manncafe":
-        return EateryID.MANN_CAFE
-    elif vendor_eatery_name == "statlermacs":
-        return EateryID.MACS_CAFE
-    elif vendor_eatery_name == "morrisondining" or vendor_eatery_name == "morrison":
-        return EateryID.MORRISON_DINING
-    elif vendor_eatery_name == "novickscafe":
-        return EateryID.NOVICKS_CAFE
-    elif vendor_eatery_name == "Vet College Cafe":
-        return EateryID.VET_CAFE
-    else:
-        # TODO: Add a slack notif / flag that a wait time location was not recognized
-        return None
+    
+    internal_id = VENDOR_NAME_TO_INTERNAL.get(vendor_eatery_name)
+    
+    if internal_id is not None:
+        for dining_id, info in EATERY_INFO.items():
+            if info["internal_id"] == internal_id:
+                return info
+        
+        return {
+            "internal_id": internal_id,
+            "image_url": DEFAULT_IMAGE_URL
+        }
+    
+    # TODO: Add a slack notif / flag that a wait time location was not recognized
+    return {
+        "internal_id": None,
+        "image_url": DEFAULT_IMAGE_URL
+    }
+
+
+def dining_id_to_internal_id(id: int):
+    """Convert dining ID to internal eatery ID"""
+    info = get_eatery_info(id)
+    return info["internal_id"]
+
+
+def vendor_name_to_internal_id(vendor_eatery_name):
+    """Convert vendor eatery name to internal eatery ID"""
+    vendor_eatery_name = "".join(c.lower() for c in vendor_eatery_name if c.isalpha())
+    
+    if vendor_eatery_name in VENDOR_NAME_TO_INTERNAL:
+        return VENDOR_NAME_TO_INTERNAL[vendor_eatery_name]
+    
+    # TODO: Add a slack notif / flag that a wait time location was not recognized
+    return None
+
+
+def dining_id_to_image_url(id: int):
+    """Convert dining ID directly to image URL"""
+    if id in EATERY_INFO:
+        return EATERY_INFO[id]["image_url"]
+    
+    print(f"Missing image url for dining_id {id}")
+    return DEFAULT_IMAGE_URL
