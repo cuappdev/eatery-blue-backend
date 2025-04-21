@@ -21,7 +21,10 @@ class PopulateItemController:
             data = {"category": category_id, "name": json_item["item"], "dietary_preferences": dietary_preferences, "allergens": allergens}
             item = ItemSerializer(data=data)
             if item.is_valid():
-                item.save()
+                try:
+                    item.save()
+                except Exception as e:
+                    print(f"Error saving item {json_item['item']}. Skipping...")
             else:
                 print(item.errors)
 
