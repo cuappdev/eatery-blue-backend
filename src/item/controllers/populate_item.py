@@ -19,14 +19,16 @@ class PopulateItemController:
             allergens = json_item.get("allergens", [])
             
             data = {"category": category_id, "name": json_item["item"], "dietary_preferences": dietary_preferences, "allergens": allergens}
-            item = ItemSerializer(data=data)
-            if item.is_valid():
-                try:
+            try:
+                item = ItemSerializer(data=data)
+                if item.is_valid():
                     item.save()
-                except Exception as e:
-                    print(f"Error saving item {json_item['item']}. Skipping...")
-            else:
-                print(item.errors)
+                else:
+                    print(item.errors)
+            except Exception as e:
+                print(f"Error saving item: {e}")
+                print(f"Data: {data}")
+                
 
     def generate_dining_hall_items(self, menu, json_event, json_eatery):
         json_menus = json_event["menu"]

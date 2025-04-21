@@ -17,13 +17,21 @@ class ItemSerializer(serializers.ModelSerializer):
         allergens = validated_data.pop('allergens', [])
         item, _ = Item.objects.get_or_create(**validated_data)
 
+        dietary_prefs_objects = []
         for pref_name in dietary_prefs:
             pref, _ = DietaryPreference.objects.get_or_create(name=pref_name)
-            item.dietary_preferences.add(pref)
+            dietary_prefs_objects.append(pref)
+        
+        if dietary_prefs_objects:
+            item.dietary_preferences.add(*dietary_prefs_objects)
 
+        allergens_objects = []
         for allergen_name in allergens:
             allergen, _ = Allergen.objects.get_or_create(name=allergen_name)
-            item.allergens.add(allergen)
+            allergens_objects.append(allergen)
+
+        if allergens_objects:
+            item.allergens.add(*allergens_objects)
 
         return item
 
