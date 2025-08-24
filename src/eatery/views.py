@@ -27,6 +27,18 @@ class EateryViewSet(viewsets.ModelViewSet):
     serializer_class = EaterySerializer
     permission_classes = [EateryPermission]
 
+    def get_queryset(self):
+        """
+        Override to add prefetch_related for optimization
+        """
+        queryset = super().get_queryset()
+        
+        # prefetch all related objects to avoid N+1 query problem
+        return queryset.prefetch_related(
+            'events__menu__items__dietary_preferences',
+            'events__menu__items__allergens'
+        )
+
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = EaterySerializerOptimized(instance)
@@ -98,7 +110,10 @@ class GetEateriesSimple(APIView):
     """
 
     def get(self, request):
-        eateries = EaterySerializerSimple(Eatery.objects.all(), many=True)
+        eateries_queryset = Eatery.objects.prefetch_related(
+            'events'
+        ).all()
+        eateries = EaterySerializerSimple(eateries_queryset, many=True)
         return Response(eateries.data)
 
 
@@ -109,8 +124,13 @@ class GetEateriesByDay(APIView):
 
     @method_decorator(cache_page(60 * 60 * 2))  # cache for 2 hours
     def get(self, request, day):
+        eateries_queryset = Eatery.objects.prefetch_related(
+            'events__menu__items__dietary_preferences',
+            'events__menu__items__allergens'
+        ).exclude(events__event_description="Open")
+        
         eateries = EaterySerializerByDay(
-            Eatery.objects.exclude(events__event_description="Open"),
+            eateries_queryset,
             many=True,
             context={"day": day},
         )
