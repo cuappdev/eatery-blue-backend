@@ -17,12 +17,26 @@ class ItemSerializer(serializers.ModelSerializer):
         return list(obj.allergens.values_list('name', flat=True))
 
     def create(self, validated_data):
-        # handle m2m fields differently
-        item, _ = Item.objects.get_or_create(
-            category=validated_data.get('category'),
-            name=validated_data.get('name'),
-            base_price=validated_data.get('base_price', 0.0)
-        )
+        dietary_prefs = validated_data.pop('dietary_preferences', [])
+        allergens = validated_data.pop('allergens', [])
+        item, _ = Item.objects.get_or_create(**validated_data)
+
+        dietary_prefs_objects = []
+        for pref_name in dietary_prefs:
+            pref, _ = DietaryPreference.objects.get_or_create(name=pref_name)
+            dietary_prefs_objects.append(pref)
+        
+        if dietary_prefs_objects:
+            item.dietary_preferences.add(*dietary_prefs_objects)
+
+        allergens_objects = []
+        for allergen_name in allergens:
+            allergen, _ = Allergen.objects.get_or_create(name=allergen_name)
+            allergens_objects.append(allergen)
+
+        if allergens_objects:
+            item.allergens.add(*allergens_objects)
+
         return item
     
     def update(self, instance, validated_data):
