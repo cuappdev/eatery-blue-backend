@@ -8,6 +8,7 @@ coreapi==2.3.3
 coreschema==0.0.4
 distlib==0.3.8
 Django==4.0
+django-db-connection-pool==1.2.5
 django-rest-swagger==2.2.0
 djangorestframework==3.13.1
 drf-yasg==1.21.7
