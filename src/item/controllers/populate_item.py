@@ -1,4 +1,4 @@
-from item.serializers import ItemSerializer
+from item.models import Item, DietaryPreference, Allergen
 import json
 from util.constants import eatery_is_cafe
 
@@ -6,6 +6,30 @@ from util.constants import eatery_is_cafe
 class PopulateItemController:
     def __init__(self):
         self = self
+
+    def create_item_with_m2m(self, category_id, name, dietary_preferences=None, allergens=None):
+        # handle many to many relationships
+        item, created = Item.objects.get_or_create(
+            category_id=category_id,
+            name=name,
+            defaults={'base_price': 0.0}
+        )
+        
+        # handle dietary preferences
+        if dietary_preferences:
+            for pref_name in dietary_preferences:
+                if pref_name:
+                    pref, _ = DietaryPreference.objects.get_or_create(name=pref_name)
+                    item.dietary_preferences.add(pref)
+        
+        # handle allergens
+        if allergens:
+            for allergen_name in allergens:
+                if allergen_name:
+                    allergen, _ = Allergen.objects.get_or_create(name=allergen_name)
+                    item.allergens.add(allergen)
+        
+        return item
 
     def generate_cafe_items(self, menu, json_eatery):
         for json_item in json_eatery["diningItems"]:
@@ -18,33 +42,32 @@ class PopulateItemController:
             dietary_preferences = json_item.get("dietaryPreferences", [])
             allergens = json_item.get("allergens", [])
             
-            data = {"category": category_id, "name": json_item["item"], "dietary_preferences": dietary_preferences, "allergens": allergens}
-            try:
-                item = ItemSerializer(data=data)
-                if item.is_valid():
-                    item.save()
-                else:
-                    print(item.errors)
-            except Exception as e:
-                print(f"Error saving item: {e}")
-                print(f"Data: {data}")
-                
+            self.create_item_with_m2m(
+                category_id=category_id,
+                name=json_item["item"],
+                dietary_preferences=dietary_preferences,
+                allergens=allergens
+            )
 
     def generate_dining_hall_items(self, menu, json_event, json_eatery):
         json_menus = json_event["menu"]
         for json_menu in json_menus:
             category_name = json_menu["category"].strip()
-            category_id = menu[category_name]
+            try:
+                category_id = menu[category_name]
+            except KeyError:
+                continue
 
             for json_item in json_menu["items"]:
                 dietary_preferences = json_item.get("dietaryPreferences", [])
                 allergens = json_item.get("allergens", [])
-                data = {"category": category_id, "name": json_item["item"], "dietary_preferences": dietary_preferences, "allergens": allergens}
-                item = ItemSerializer(data=data)
-                if item.is_valid():
-                    item.save()
-                else:
-                    print(item.errors)
+                
+                self.create_item_with_m2m(
+                    category_id=category_id,
+                    name=json_item["item"],
+                    dietary_preferences=dietary_preferences,
+                    allergens=allergens
+                )
 
     def process(self, categories_dict, json_eateries):
         with open(

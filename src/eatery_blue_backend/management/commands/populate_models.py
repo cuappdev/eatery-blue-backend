@@ -10,6 +10,7 @@ from item.controllers.populate_item import PopulateItemController
 from category.controllers.populate_category import PopulateCategoryController
 import os
 import json
+import shutil
 
 
 class Command(BaseCommand):
@@ -33,18 +34,36 @@ class Command(BaseCommand):
             json_eateries = response["data"]["eateries"]
         return json_eateries
     
+    def ensure_external_eateries_exists(self):
+        external_path = "./static_sources/external_eateries.json"
+        static_path = "./static_sources/external_eateries_static.json"
+        
+        # if external_eateries.json doesn't exist, copy from static
+        if not os.path.exists(external_path):
+            if os.path.exists(static_path):
+                shutil.copy2(static_path, external_path)
+                print("Created external_eateries.json from static template")
+            else:
+                # create fallback file
+                data = {"eateries": []}
+                with open(external_path, "w") as f:
+                    json.dump(data, f, indent=2)
+                print("Created minimal external_eateries.json")
+    
     def update_freedge_external_eatery(self):
+        self.ensure_external_eateries_exists()
+        
         GOOGLE_SHEETS_API_KEY = os.environ.get("GOOGLE_SHEETS_API_KEY")
         FREEDGE_SHEET_ID = os.environ.get("FREEDGE_SHEET_ID")
         FREEDGE_APPROVED_EMAILS = os.environ.get("FREEDGE_APPROVED_EMAILS")
         if not GOOGLE_SHEETS_API_KEY:
-            print("GOOGLE_SHEETS_API_KEY not set, cannot update freedge external eatery")
+            print("GOOGLE_SHEETS_API_KEY not set, skipping freedge update")
             return
         if not FREEDGE_SHEET_ID:
-            print("FREEDGE_SHEET_ID not set, cannot update freedge external eatery")
+            print("FREEDGE_SHEET_ID not set, skipping freedge update")
             return
         if not FREEDGE_APPROVED_EMAILS:
-            print("FREEDGE_APPROVED_EMAILS not set, cannot update freedge external eatery")
+            print("FREEDGE_APPROVED_EMAILS not set, skipping freedge update")
             return
         
         approved_emails = FREEDGE_APPROVED_EMAILS.split(",")
