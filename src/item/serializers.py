@@ -10,11 +10,11 @@ class ItemSerializer(serializers.ModelSerializer):
 
     def get_dietary_preferences(self, obj):
         """Get list of dietary preference names"""
-        return list(obj.dietary_preferences.values_list('name', flat=True))
+        return [pref.name for pref in obj.dietary_preferences.all()]
     
     def get_allergens(self, obj):
         """Get list of allergen names"""
-        return list(obj.allergens.values_list('name', flat=True))
+        return [allergen.name for allergen in obj.allergens.all()]
 
     def create(self, validated_data):
         dietary_prefs = validated_data.pop('dietary_preferences', [])
