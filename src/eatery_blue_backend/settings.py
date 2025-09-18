@@ -44,6 +44,11 @@ ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS").split(",")
 
 # Application definition
 
+REST_FRAMEWORK = {
+    "DEFAULT_RENDERER_CLASSES": ("drf_orjson.renderers.ORJSONRenderer",),
+    "DEFAULT_PARSER_CLASSES": ("drf_orjson.parsers.ORJSONParser",),
+}
+
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -115,7 +120,7 @@ DATABASES = {
             "PRE_PING": True,
             "ECHO": False,
             "TIMEOUT": 30,
-        }
+        },
     }
 }
 
