@@ -32,18 +32,24 @@ class EateryViewSet(viewsets.ModelViewSet):
     serializer_class = EaterySerializer
     permission_classes = [EateryPermission]
 
+    @profile
     def get_queryset(self):
         """
         Override to add prefetch_related for optimization
         """
         queryset = super().get_queryset()
 
-        # prefetch all related objects to avoid N+1 query problem
-        return queryset.prefetch_related(
-            "events__menu__items__dietary_preferences", "events__menu__items__allergens"
-        )
+        # Prefetching only needed for list to prevent N+1
+        if self.action == "list":
+            return queryset.prefetch_related(
+                "events__menu__items__dietary_preferences",
+                "events__menu__items__allergens",
+            )
+
+        return queryset
 
     @profile
+    @method_decorator(cache_page(60 * 60 * 2))  # cache for 2 hours
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = EaterySerializerOptimized(instance)
