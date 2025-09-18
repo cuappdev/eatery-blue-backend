@@ -1,10 +1,10 @@
 from django.urls import path
 from eatery.views import EateryViewSet, GetEateriesSimple, GetEateriesByDay
 
-eateries_list = EateryViewSet.as_view({"get": "list", "post": "create"})
+eateries_list = EateryViewSet.as_view({"get": "list"})
 
 eatery_list = EateryViewSet.as_view(
-    {"get": "retrieve", "put": "update", "patch": "partial_update", "delete": "destroy"}
+    {"get": "retrieve"}
 )
 
 urlpatterns = [

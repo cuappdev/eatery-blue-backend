@@ -3,7 +3,7 @@ from item.models import Item
 from item.serializers import ItemSerializer
 
 
-class ItemViewSet(viewsets.ModelViewSet):
+class ItemViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Item.objects.all()
     serializer_class = ItemSerializer
     
