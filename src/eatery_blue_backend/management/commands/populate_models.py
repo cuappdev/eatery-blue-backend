@@ -7,6 +7,7 @@ from eatery.controllers.populate_eatery import PopulateEateryController
 from event.controllers.populate_event import PopulateEventController
 from item.controllers.populate_item import PopulateItemController
 from category.controllers.populate_category import PopulateCategoryController
+from memory_profiler import profile
 
 
 class Command(BaseCommand):
@@ -37,6 +38,7 @@ class Command(BaseCommand):
         print(f"Done ({int(datetime.now().timestamp()) - pre}s) ")
         return output
 
+    @profile
     def process(self):
         """
         1. Get JSON from API

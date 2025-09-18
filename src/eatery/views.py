@@ -7,8 +7,6 @@ from eatery.serializers import (
 from eatery.util.json import FieldType, error_json, success_json, verify_json_fields
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
-from django.utils.decorators import method_decorator
-from django.views.decorators.cache import cache_page
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import viewsets
@@ -16,6 +14,7 @@ from .permissions import EateryPermission
 from eatery.datatype.Eatery import EateryID
 from eatery.models import Eatery
 from .controllers.update_eatery import UpdateEateryController
+from memory_profiler import profile
 
 
 class EateryViewSet(viewsets.ModelViewSet):
@@ -27,17 +26,20 @@ class EateryViewSet(viewsets.ModelViewSet):
     serializer_class = EaterySerializer
     permission_classes = [EateryPermission]
 
+    @profile
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = EaterySerializerOptimized(instance)
         return Response(serializer.data)
 
-    @method_decorator(cache_page(60 * 60 * 2))  # cache for 2 hours
+    # @method_decorator(cache_page(60 * 60 * 2))  # cache for 2 hours
+    @profile
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
         serializer = EaterySerializerOptimized(queryset, many=True)
         return Response(serializer.data)
 
+    @profile
     def get_object(self):
         queryset = self.filter_queryset(self.get_queryset())
         lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
@@ -97,6 +99,7 @@ class GetEateriesSimple(APIView):
     View all eateries with less information
     """
 
+    @profile
     def get(self, request):
         eateries = EaterySerializerSimple(Eatery.objects.all(), many=True)
         return Response(eateries.data)
@@ -107,7 +110,8 @@ class GetEateriesByDay(APIView):
     Get all eatery information by day
     """
 
-    @method_decorator(cache_page(60 * 60 * 2))  # cache for 2 hours
+    # @method_decorator(cache_page(60 * 60 * 2))  # cache for 2 hours
+    @profile
     def get(self, request, day):
         eateries = EaterySerializerByDay(
             Eatery.objects.exclude(events__event_description="Open"),
