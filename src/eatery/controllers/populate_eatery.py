@@ -3,6 +3,7 @@ from eatery.util.constants import dining_id_to_internal_id, dining_id_to_image_u
 from eatery.serializers import EaterySerializer
 from eatery.models import Eatery
 from django.core.exceptions import ObjectDoesNotExist
+from memory_profiler import profile
 
 
 class PopulateEateryController:
@@ -88,6 +89,7 @@ class PopulateEateryController:
                 else:
                     print(serialized.errors)
 
+    @profile
     def process(self, json_eateries):
         for json_eatery in json_eateries:
             self.generate_eatery(json_eatery)
