@@ -7,6 +7,8 @@ from eatery.serializers import (
 from eatery.util.json import FieldType, error_json, success_json, verify_json_fields
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import viewsets
@@ -31,11 +33,10 @@ class EateryViewSet(viewsets.ModelViewSet):
         Override to add prefetch_related for optimization
         """
         queryset = super().get_queryset()
-        
+
         # prefetch all related objects to avoid N+1 query problem
         return queryset.prefetch_related(
-            'events__menu__items__dietary_preferences',
-            'events__menu__items__allergens'
+            "events__menu__items__dietary_preferences", "events__menu__items__allergens"
         )
 
     @profile
@@ -44,8 +45,8 @@ class EateryViewSet(viewsets.ModelViewSet):
         serializer = EaterySerializerOptimized(instance)
         return Response(serializer.data)
 
-    # @method_decorator(cache_page(60 * 60 * 2))  # cache for 2 hours
     @profile
+    @method_decorator(cache_page(60 * 60 * 2))  # cache for 2 hours
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
         serializer = EaterySerializerOptimized(queryset, many=True)
@@ -113,9 +114,7 @@ class GetEateriesSimple(APIView):
 
     @profile
     def get(self, request):
-        eateries_queryset = Eatery.objects.prefetch_related(
-            'events'
-        ).all()
+        eateries_queryset = Eatery.objects.prefetch_related("events").all()
         eateries = EaterySerializerSimple(eateries_queryset, many=True)
         return Response(eateries.data)
 
@@ -125,14 +124,13 @@ class GetEateriesByDay(APIView):
     Get all eatery information by day
     """
 
-    # @method_decorator(cache_page(60 * 60 * 2))  # cache for 2 hours
     @profile
+    @method_decorator(cache_page(60 * 60 * 2))  # cache for 2 hours
     def get(self, request, day):
         eateries_queryset = Eatery.objects.prefetch_related(
-            'events__menu__items__dietary_preferences',
-            'events__menu__items__allergens'
+            "events__menu__items__dietary_preferences", "events__menu__items__allergens"
         ).exclude(events__event_description="Open")
-        
+
         eateries = EaterySerializerByDay(
             eateries_queryset,
             many=True,
