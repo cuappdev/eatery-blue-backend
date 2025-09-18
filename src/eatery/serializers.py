@@ -1,13 +1,10 @@
 from rest_framework import serializers
 from eatery.models import Eatery
-from event.models import Event
 from event.serializers import (
     EventSerializer,
     EventSerializerSimple,
     EventSerializerOptimized,
 )
-from datetime import timedelta, datetime
-from zoneinfo import ZoneInfo
 
 
 class EaterySerializer(serializers.ModelSerializer):
@@ -107,25 +104,7 @@ class EaterySerializerByDay(serializers.ModelSerializer):
         allow_null=True,
         default="https://images-prod.healthline.com/hlcmsresource/images/AN_images/health-benefits-of-apples-1296x728-feature.jpg",
     )
-    events = serializers.SerializerMethodField()
-
-    def get_events(self, obj):
-        day_offset = self.context.get("day")
-        now = datetime.now(ZoneInfo("America/New_York"))
-        day = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(
-            days=day_offset
-        )
-        day_unix = int(day.timestamp())
-        day_end_unix = int((day + timedelta(days=1)).timestamp())
-        print(f"Now: {now}")
-        print(f"Day: {day}")
-        print(f"Day Unix: {day_unix}")
-        print(f"Day End Unix: {day_end_unix}")
-        events = Event.objects.filter(
-            eatery=obj.id, start__gte=day_unix, start__lt=day_end_unix
-        )
-        serializer = EventSerializerOptimized(instance=events, many=True)
-        return serializer.data
+    events = EventSerializerOptimized(many=True, source="filtered_events")
 
     class Meta:
         model = Eatery
