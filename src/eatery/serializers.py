@@ -6,7 +6,8 @@ from event.serializers import (
     EventSerializerSimple,
     EventSerializerOptimized,
 )
-from datetime import timedelta, datetime
+import datetime 
+from datetime import timedelta
 from zoneinfo import ZoneInfo
 
 
@@ -117,13 +118,12 @@ class EaterySerializerByDay(serializers.ModelSerializer):
         )
         day_unix = int(day.timestamp())
         day_end_unix = int((day + timedelta(days=1)).timestamp())
-        print(f"Now: {now}")
-        print(f"Day: {day}")
-        print(f"Day Unix: {day_unix}")
-        print(f"Day End Unix: {day_end_unix}")
-        events = Event.objects.filter(
-            eatery=obj.id, start__gte=day_unix, start__lt=day_end_unix
-        )
+        
+        events = [
+            event for event in obj.events.all() 
+            if day_unix <= event.start < day_end_unix
+        ]
+        
         serializer = EventSerializerOptimized(instance=events, many=True)
         return serializer.data
 

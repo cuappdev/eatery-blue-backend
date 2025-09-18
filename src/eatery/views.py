@@ -1,3 +1,6 @@
+import datetime
+from datetime import timedelta
+from zoneinfo import ZoneInfo
 from eatery.serializers import (
     EaterySerializer,
     EaterySerializerSimple,
@@ -12,10 +15,15 @@ from django.views.decorators.cache import cache_page
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import viewsets
+
+from event.models import Event
+from event.serializers import EventSerializerOptimized
 from .permissions import EateryPermission
 from eatery.datatype.Eatery import EateryID
 from eatery.models import Eatery
 from .controllers.update_eatery import UpdateEateryController
+from rest_framework import serializers
+from django.db.models import Prefetch
 
 
 class EateryViewSet(viewsets.ModelViewSet):
@@ -117,6 +125,7 @@ class GetEateriesSimple(APIView):
         return Response(eateries.data)
 
 
+
 class GetEateriesByDay(APIView):
     """
     Get all eatery information by day
@@ -124,14 +133,63 @@ class GetEateriesByDay(APIView):
 
     @method_decorator(cache_page(60 * 60 * 2))  # cache for 2 hours
     def get(self, request, day):
-        eateries_queryset = Eatery.objects.prefetch_related(
-            'events__menu__items__dietary_preferences',
-            'events__menu__items__allergens'
-        ).exclude(events__event_description="Open")
+        now = datetime.datetime.now(ZoneInfo("America/New_York"))
+        target_day = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(
+            days=day
+        )
+        day_unix = int(target_day.timestamp())
+        day_end_unix = int((target_day + timedelta(days=1)).timestamp())
         
-        eateries = EaterySerializerByDay(
+        # Filter events at the database level and prefetch
+        eateries_queryset = Eatery.objects.prefetch_related(
+            Prefetch(
+                'events',
+                queryset=Event.objects.filter(
+                    start__gte=day_unix,
+                    start__lt=day_end_unix
+                ).exclude(event_description="Open").prefetch_related(
+                    'menu__items__dietary_preferences',
+                    'menu__items__allergens'
+                ),
+                to_attr='filtered_events'
+            )
+        )
+        
+        eateries = EaterySerializerByDayOptimized(
             eateries_queryset,
             many=True,
             context={"day": day},
         )
         return Response(eateries.data)
+
+
+class EaterySerializerByDayOptimized(serializers.ModelSerializer):
+    menu_summary = serializers.CharField(allow_null=True, default="Cornell Eatery")
+    image_url = serializers.URLField(
+        allow_null=True,
+        default="https://images-prod.healthline.com/hlcmsresource/images/AN_images/health-benefits-of-apples-1296x728-feature.jpg",
+    )
+    events = serializers.SerializerMethodField()
+
+    def get_events(self, obj):
+        events = getattr(obj, 'filtered_events', [])
+        serializer = EventSerializerOptimized(instance=events, many=True)
+        return serializer.data
+
+    class Meta:
+        model = Eatery
+        fields = [
+            "id",
+            "name",
+            "menu_summary",
+            "image_url",
+            "location",
+            "campus_area",
+            "online_order_url",
+            "latitude",
+            "longitude",
+            "payment_accepts_meal_swipes",
+            "payment_accepts_brbs",
+            "payment_accepts_cash",
+            "events",
+        ]

@@ -309,19 +309,19 @@ class UserViewSet(viewsets.ModelViewSet):
             user.brb_balance = brb_account.get("balance", 0)
             user.brb_account_name = brb_account.get("accountDisplayName", "")
         else:
-            user.brb_account_name = None
+            user.brb_account_name = ""
 
         if city_bucks_account:
             user.city_bucks_balance = city_bucks_account.get("balance", 0)
             user.city_bucks_account_name = city_bucks_account.get("accountDisplayName", "")
         else:
-            user.city_bucks_account_name = None
+            user.city_bucks_account_name = ""
 
         if laundry_account:
             user.laundry_balance = laundry_account.get("balance", 0)
             user.laundry_account_name = laundry_account.get("accountDisplayName", "")
         else:
-            user.laundry_account_name = None
+            user.laundry_account_name = ""
 
         user.save()
 

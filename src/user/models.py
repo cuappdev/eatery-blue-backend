@@ -4,7 +4,7 @@ from django.contrib.postgres.fields import ArrayField
 
 class User(models.Model):
     device_id = models.CharField(max_length=100, blank=True)
-    fcm_token = models.CharField(max_length=100, blank=True)
+    fcm_token = models.CharField(max_length=256, blank=True)
     favorite_items = ArrayField(
         models.CharField(max_length=100), blank=True, default=list
     )
