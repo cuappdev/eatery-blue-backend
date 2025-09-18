@@ -56,4 +56,5 @@ uritemplate==4.1.1
 urllib3==1.26.20
 virtualenv==20.26.3
 orjson
+drf-orjson
 djangorestframework-orjson
