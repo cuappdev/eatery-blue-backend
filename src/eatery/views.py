@@ -9,7 +9,7 @@ from eatery.util.json import FieldType, error_json, success_json, verify_json_fi
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
-from django.views.decorators.cache import cache_page
+from .util.cache import cache_page_with_jitter
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import viewsets
@@ -49,14 +49,18 @@ class EateryViewSet(viewsets.ReadOnlyModelViewSet):
         return queryset
 
     @profile
-    @method_decorator(cache_page(60 * 60 * 2))  # cache for 2 hours
+    @method_decorator(
+        cache_page_with_jitter(timeout=60 * 60, jitter=60 * 15)
+    )  # cache for 1 hour + up to 15 min jitter
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = EaterySerializerOptimized(instance)
         return Response(serializer.data)
 
     @profile
-    @method_decorator(cache_page(60 * 60 * 2))  # cache for 2 hours
+    @method_decorator(
+        cache_page_with_jitter(timeout=60 * 60, jitter=60 * 15)
+    )  # cache for 1 hour + up to 15 min jitter
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
         serializer = EaterySerializerOptimized(queryset, many=True)
@@ -121,7 +125,11 @@ class GetEateriesSimple(APIView):
     """
     View all eateries with less information
     """
+
     @profile
+    @method_decorator(
+        cache_page_with_jitter(timeout=60 * 60, jitter=60 * 15)
+    )  # cache for 1 hour + up to 15 min jitter
     def get(self, request):
         eateries_queryset = Eatery.objects.prefetch_related("events").all()
         eateries = EaterySerializerSimple(eateries_queryset, many=True)
@@ -132,8 +140,11 @@ class GetEateriesByDay(APIView):
     """
     Get all eatery information by day
     """
+
     @profile
-    @method_decorator(cache_page(60 * 60 * 2))  # cache for 2 hours
+    @method_decorator(
+        cache_page_with_jitter(timeout=60 * 60, jitter=60 * 15)
+    )  # cache for 1 hour + up to 15 min jitter
     def get(self, request, day):
         now = datetime.now(ZoneInfo("America/New_York"))
         start_date = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(
