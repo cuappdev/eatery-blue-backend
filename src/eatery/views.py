@@ -23,7 +23,7 @@ from datetime import timedelta, datetime
 from zoneinfo import ZoneInfo
 
 
-class EateryViewSet(viewsets.ModelViewSet):
+class EateryViewSet(viewsets.ReadOnlyModelViewSet):
     """
     View and edit eateries (all, or specific)
     """
@@ -121,7 +121,6 @@ class GetEateriesSimple(APIView):
     """
     View all eateries with less information
     """
-
     @profile
     def get(self, request):
         eateries_queryset = Eatery.objects.prefetch_related("events").all()
@@ -133,7 +132,6 @@ class GetEateriesByDay(APIView):
     """
     Get all eatery information by day
     """
-
     @profile
     @method_decorator(cache_page(60 * 60 * 2))  # cache for 2 hours
     def get(self, request, day):
