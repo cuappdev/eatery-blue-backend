@@ -2,11 +2,11 @@ version: "3"
 
 services:
   app:
-    build: .
+    image: cornellappdev/eatery-blue:${IMAGE_TAG}
     env_file: .env
     stdin_open: true # docker run -i
     tty: true # docker run -t
-    command: sh -c "python manage.py migrate && printenv > /etc/environment && { cron start & python manage.py runserver 0.0.0.0:80; }"
+    command: sh -c "python manage.py migrate && printenv > /etc/environment && { cron start & python manage.py runserver 0.0.0.0:8000; }"
     ports:
-      - "80:80"
+      - "8000:8000"
     restart: always
