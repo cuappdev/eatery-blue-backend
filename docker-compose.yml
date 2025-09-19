@@ -4,9 +4,13 @@ services:
   app:
     image: cornellappdev/eatery-blue:${IMAGE_TAG}
     env_file: .env
-    stdin_open: true # docker run -i
-    tty: true # docker run -t
-    command: sh -c "python manage.py migrate && printenv > /etc/environment && { cron start & python manage.py runserver 0.0.0.0:8000; }"
+    command: sh -c "python manage.py migrate && gunicorn src.eatery_blue_backend.wsgi:application --bind 0.0.0.0:8000 --workers 4"
     ports:
       - "8000:8000"
-    restart: always
+  
+  scraper:
+    image: cornellappdev/eatery-blue:${IMAGE_TAG}
+    env_file: .env
+    command: sh -c "printenv > /etc/environment && cron -f"
+    depends_on:
+      - app

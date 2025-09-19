@@ -9,7 +9,7 @@ from eatery.util.json import FieldType, error_json, success_json, verify_json_fi
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
-from .utils.cache import cache_page_with_jitter
+from .util.cache import cache_page_with_jitter
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import viewsets
