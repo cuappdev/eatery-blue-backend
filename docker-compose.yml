@@ -2,14 +2,14 @@ version: "3"
 
 services:
   app:
-    image: cornellappdev/eatery-blue:${IMAGE_TAG}
+    image: cornellappdev/eatery-blue-dev:${IMAGE_TAG}
     env_file: .env
-    command: sh -c "python manage.py migrate && gunicorn src.eatery_blue_backend.wsgi:application --bind 0.0.0.0:8000 --workers 4"
+    command: sh -c "python manage.py migrate && gunicorn eatery_blue_backend.wsgi:application --bind 0.0.0.0:8000 --workers 4 --access-logfile - --error-logfile - --log-level info"
     ports:
       - "8000:8000"
   
   scraper:
-    image: cornellappdev/eatery-blue:${IMAGE_TAG}
+    image: cornellappdev/eatery-blue-dev:${IMAGE_TAG}
     env_file: .env
     command: sh -c "printenv > /etc/environment && cron -f"
     depends_on:
