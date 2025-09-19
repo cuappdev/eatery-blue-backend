@@ -39,8 +39,7 @@ class EateryViewSet(viewsets.ReadOnlyModelViewSet):
         """
         queryset = super().get_queryset()
 
-        # Prefetching only needed for list to prevent N+1
-        if self.action == "list":
+        if self.action in ["list", "retrieve"]:
             return queryset.prefetch_related(
                 "events__menu__items__dietary_preferences",
                 "events__menu__items__allergens",
