@@ -37,7 +37,7 @@ SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # IS_PROD can be None
-DEBUG = False if os.environ.get("IS_PROD") is True else True
+DEBUG = True
 
 ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS").split(",")
 
@@ -45,8 +45,13 @@ ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS").split(",")
 # Application definition
 
 REST_FRAMEWORK = {
-    "DEFAULT_RENDERER_CLASSES": ("drf_orjson.renderers.ORJSONRenderer",),
-    "DEFAULT_PARSER_CLASSES": ("drf_orjson.parsers.ORJSONParser",),
+    "DEFAULT_RENDERER_CLASSES": (
+        "rest_framework.renderers.JSONRenderer",
+        "rest_framework.renderers.BrowsableAPIRenderer",
+    ),
+    "DEFAULT_PARSER_CLASSES": (
+        "rest_framework.parsers.JSONParser",
+    ),
 }
 
 INSTALLED_APPS = [
