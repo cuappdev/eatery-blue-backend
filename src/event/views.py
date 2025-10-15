@@ -9,7 +9,4 @@ class EventViewSet(viewsets.ReadOnlyModelViewSet):
     
     def get_queryset(self):
         # prefetch related menu categories and items
-        return Event.objects.select_related('eatery').prefetch_related(
-            'menu__items__dietary_preferences',
-            'menu__items__allergens'
-        ).all()
+        return Event.objects.select_related('eatery').all()

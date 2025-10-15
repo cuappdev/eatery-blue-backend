@@ -9,7 +9,4 @@ class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
     
     def get_queryset(self):
         # prefetch items and their related fields
-        return Category.objects.select_related('event__eatery').prefetch_related(
-            'items__dietary_preferences',
-            'items__allergens'
-        ).all()
+        return Category.objects.select_related('event__eatery').all()

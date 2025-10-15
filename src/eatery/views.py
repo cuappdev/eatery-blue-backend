@@ -32,20 +32,6 @@ class EateryViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = EaterySerializer
     permission_classes = [EateryPermission]
 
-    @profile
-    def get_queryset(self):
-        """
-        Override to add prefetch_related for optimization
-        """
-        queryset = super().get_queryset()
-
-        if self.action in ["list", "retrieve"]:
-            return queryset.prefetch_related(
-                "events__menu__items__dietary_preferences",
-                "events__menu__items__allergens",
-            )
-
-        return queryset
 
     @profile
     @method_decorator(
@@ -158,8 +144,6 @@ class GetEateriesByDay(APIView):
             "events",
             queryset=Event.objects.filter(
                 start__gte=start_unix, start__lt=end_unix
-            ).prefetch_related(
-                "menu__items__dietary_preferences", "menu__items__allergens"
             ),
             to_attr="filtered_events",
         )
