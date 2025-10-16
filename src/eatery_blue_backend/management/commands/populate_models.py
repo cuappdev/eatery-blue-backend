@@ -20,20 +20,28 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         self.stdout.write(f"Populating models at {datetime.now()} UTC")
         start = int(datetime.now().timestamp())
-        self.process()
-        self.stdout.write(
-            f"Finished populating models at {datetime.now()} UTC ({int(datetime.now().timestamp()) - start}s)"
-        )
+        try:
+            # Wrap the process in a transaction to ensure atomicity
+            from django.db import transaction
+            with transaction.atomic():
+                self.process()
+            self.stdout.write(
+                f"Finished populating models at {datetime.now()} UTC ({int(datetime.now().timestamp()) - start}s)"
+            )
+        except Exception as e:
+            self.stdout.write(self.style.ERROR(f"An error occurred during population: {e}"))
+            self.stdout.write(self.style.ERROR("Database transaction rolled back, old data is preserved."))
 
     def get_json(self):
         try:
             response = requests.get(CORNELL_DINING_URL, timeout=10)
-        except Exception as e:
+            response.raise_for_status()
+            data = response.json()
+            if not data.get("data", {}).get("eateries"):
+                raise ValueError("API response did not contain eatery data.")
+            return data["data"]["eateries"]
+        except (requests.RequestException, ValueError) as e:
             raise e
-        if response.status_code <= 400:
-            response = response.json()
-            json_eateries = response["data"]["eateries"]
-        return json_eateries
     
     def ensure_external_eateries_exists(self):
         external_path = "./static_sources/external_eateries.json"
