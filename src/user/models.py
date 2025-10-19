@@ -3,17 +3,17 @@ from django.contrib.postgres.fields import ArrayField
 
 
 class User(models.Model):
-    device_id = models.CharField(max_length=100, blank=True)
-    fcm_token = models.CharField(max_length=100, blank=True)
+    device_id = models.CharField(max_length=256, blank=True)
+    fcm_token = models.CharField(max_length=256, blank=True)
     favorite_items = ArrayField(
-        models.CharField(max_length=100), blank=True, default=list
+        models.CharField(max_length=256), blank=True, default=list
     )
     favorite_eateries = models.ManyToManyField(
         "eatery.Eatery", related_name="favorited_by", blank=True
     )
-    brb_account_name = models.CharField(max_length=255, blank=True)
-    city_bucks_account_name = models.CharField(max_length=255, blank=True)
-    laundry_account_name = models.CharField(max_length=255, blank=True)
+    brb_account_name = models.CharField(max_length=256, blank=True)
+    city_bucks_account_name = models.CharField(max_length=256, blank=True)
+    laundry_account_name = models.CharField(max_length=256, blank=True)
 
     brb_balance = models.FloatField(default=0)
     city_bucks_balance = models.FloatField(default=0)
