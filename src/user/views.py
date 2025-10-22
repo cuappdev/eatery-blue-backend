@@ -94,12 +94,12 @@ class UserViewSet(viewsets.ModelViewSet):
         if error:
             return error
 
-        device_id = request.data.get("deviceId")
+        device_id = request.data.get("device_id")
         pin = request.data.get("pin")
-        fcm_token = request.data.get("fcmToken")
+        fcm_token = request.data.get("fcm_token")
 
         if not device_id or not pin:
-            return Response({"error": "deviceId, pin required"},
+            return Response({"error": "device_id, pin required"},
                             status=status.HTTP_400_BAD_REQUEST)
 
         # prepare payload for GET API
