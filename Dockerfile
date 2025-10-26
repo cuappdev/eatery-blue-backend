@@ -1,6 +1,6 @@
 FROM python:3.9
 
-RUN apt-get update && apt-get -y install cron && apt-get -y install vim
+RUN apt-get update && apt-get -y install cron tzdata && apt-get -y install vim
 RUN mkdir /usr/app
 WORKDIR /usr/app
 COPY ./src .
