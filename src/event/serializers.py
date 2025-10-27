@@ -11,6 +11,8 @@ class EventSerializer(serializers.ModelSerializer):
     start = serializers.IntegerField()
     end = serializers.IntegerField()
     menu = CategorySerializer(many=True, read_only=True)
+    upvotes = serializers.IntegerField()
+    downvotes = serializers.IntegerField()
 
     def create(self, validated_data):
         event, _ = Event.objects.get_or_create(**validated_data)
@@ -18,7 +20,7 @@ class EventSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Event
-        fields = ["id", "eatery", "event_description", "start", "end", "menu"]
+        fields = ["id", "eatery", "event_description", "start", "end", "upvotes", "downvotes", "menu"]
 
 
 class EventSerializerOptimized(serializers.ModelSerializer):
@@ -26,10 +28,10 @@ class EventSerializerOptimized(serializers.ModelSerializer):
 
     class Meta:
         model = Event
-        fields = ["id", "event_description", "start", "end", "menu"]
+        fields = ["id", "event_description", "start", "end", "upvotes", "downvotes", "menu"]
 
 
 class EventSerializerSimple(serializers.ModelSerializer):
     class Meta:
         model = Event
-        fields = ["id", "event_description", "start", "end"]
+        fields = ["id", "event_description", "start", "end", "upvotes", "downvotes"]
