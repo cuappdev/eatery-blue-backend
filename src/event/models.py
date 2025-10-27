@@ -26,6 +26,8 @@ class Event(models.Model):
     )
     start = models.IntegerField(default=0)
     end = models.IntegerField(default=0)
+    upvotes = models.IntegerField(default=0)
+    downvotes = models.IntegerField(default=0)
 
     def __str__(self):
         return f"{self.eatery.name}: {self.event_description} from {self.start} to {self.end}"
