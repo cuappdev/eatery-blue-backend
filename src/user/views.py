@@ -251,9 +251,9 @@ class UserViewSet(viewsets.ModelViewSet):
         if error:
             return error
         
-        device_id = request.data.get("deviceId")
+        device_id = request.data.get("device_id")
         if not device_id:
-            return Response({"error": "deviceId is required"},
+            return Response({"error": "device_id is required"},
                             status=status.HTTP_400_BAD_REQUEST)
         
         payload = {
@@ -302,26 +302,29 @@ class UserViewSet(viewsets.ModelViewSet):
         try:
             user = User.objects.get(device_id=device_id)
         except User.DoesNotExist:
-            return Response({"error": "User not found for the given deviceId"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "User not found for the given device_id"}, status=status.HTTP_404_NOT_FOUND)
         
         # update brb balance and account name
         if brb_account:
             user.brb_balance = brb_account.get("balance", 0)
             user.brb_account_name = brb_account.get("accountDisplayName", "")
         else:
-            user.brb_account_name = None
+            user.brb_balance = 0
+            user.brb_account_name = ""
 
         if city_bucks_account:
             user.city_bucks_balance = city_bucks_account.get("balance", 0)
             user.city_bucks_account_name = city_bucks_account.get("accountDisplayName", "")
         else:
-            user.city_bucks_account_name = None
+            user.city_bucks_balance = 0
+            user.city_bucks_account_name = ""
 
         if laundry_account:
             user.laundry_balance = laundry_account.get("balance", 0)
             user.laundry_account_name = laundry_account.get("accountDisplayName", "")
         else:
-            user.laundry_account_name = None
+            user.laundry_balance = 0
+            user.laundry_account_name = ""
 
         user.save()
 
