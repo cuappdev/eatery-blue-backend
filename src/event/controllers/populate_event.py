@@ -29,6 +29,8 @@ class PopulateEventController:
                     "event_description": json_event["descr"],
                     "start": int(json_event["startTimestamp"]),
                     "end": int(json_event["endTimestamp"]),
+                    "upvotes": 0,
+                    "downvotes": 0,
                 }
 
                 event = EventSerializer(data=data)
@@ -77,6 +79,8 @@ class PopulateEventController:
                 "event_description": json_event["descr"],
                 "start": start_timestamp,
                 "end": end_timestamp,
+                "upvotes": 0,
+                "downvotes": 0,
             }
 
             event = EventSerializer(data=data)
