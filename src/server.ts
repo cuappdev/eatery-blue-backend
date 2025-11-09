@@ -5,19 +5,13 @@ import helmet from 'helmet';
 import express from 'express';
 import type { Request, Response } from 'express';
 
-import adminRouter from './admin/adminRouter.js';
 import authRouter from './auth/authRouter.js';
-import courseOfferingRouter from './courseOfferings/courseOfferingRouter.js';
 import courseRouter from './courses/courseRouter.js';
-import enrollmentRouter from './enrollment/enrollmentRouter.js';
 import { requireAuth } from './middleware/authentication.js';
 import { globalErrorHandler } from './middleware/errorHandler.js';
 import { requestLogger } from './middleware/logger.js';
 import { userRateLimiter } from './middleware/rateLimit.js';
 import { prisma } from './prisma.js';
-import semesterRouter from './semesters/semesterRouter.js';
-import teamRouter from './teams/teamRouter.js';
-import userRouter from './users/userRouter.js';
 
 const app = express();
 
@@ -59,13 +53,7 @@ router.use('/auth', authRouter);
 // Protected routes (require authentication)
 router.use(requireAuth);
 router.use(userRateLimiter);
-router.use('/admin', adminRouter);
-router.use('/users', userRouter);
-router.use('/semesters', semesterRouter);
-router.use('/teams', teamRouter);
 router.use('/courses', courseRouter);
-router.use('/course-offerings', courseOfferingRouter);
-router.use('/enrollments', enrollmentRouter);
 
 app.use(router);
 
