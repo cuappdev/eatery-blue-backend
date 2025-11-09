@@ -1,5 +1,5 @@
 {
-  "name": "project-showcase-backend",
+  "name": "eatery-blue-backend",
   "version": "1.0.0",
   "type": "module",
   "description": "",
@@ -15,15 +15,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/MrPeterss/project-showcase-backend.git"
+    "url": "git+https://github.com/cuappdev/eatery-blue-backend.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/MrPeterss/project-showcase-backend/issues"
+    "url": "https://github.com/cuappdev/eatery-blue-backend/issues"
   },
-  "homepage": "https://github.com/MrPeterss/project-showcase-backend#readme",
+  "homepage": "https://github.com/cuappdev/eatery-blue-backend#readme",
   "dependencies": {
     "@prisma/client": "^6.16.2",
     "cookie-parser": "^1.4.7",
