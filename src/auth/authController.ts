@@ -47,7 +47,11 @@ export const verifyFirebaseToken = async (req: Request, res: Response) => {
   const user = await prisma.user.upsert({
     where: { email: firebaseUser.email },
     // If the user exists, update the refreshToken and firebaseId
-    update: { refreshToken, name: firebaseUser.displayName, firebaseId: firebaseUser.uid },
+    update: {
+      refreshToken,
+      name: firebaseUser.displayName,
+      firebaseId: firebaseUser.uid,
+    },
     // If the user does not exist, create a new user
     create: {
       email: firebaseUser.email,

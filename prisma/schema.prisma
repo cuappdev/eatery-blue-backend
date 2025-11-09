@@ -3,95 +3,174 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-enum CourseOfferingRole {
-  INSTRUCTOR
-  STUDENT
-  VIEWER
+enum CampusArea {
+  WEST
+  NORTH
+  CENTRAL
+  COLLEGETOWN
+  NONE
+}
+
+enum PaymentMethods {
+  MEAL_SWIPE
+  CASH
+  CARD
+  BRB
+}
+
+enum EateryType {
+  DINING_ROOM
+  CAFE
+  COFFEE_SHOP
+}
+
+enum EventType {
+  BREAKFAST
+  BRUNCH
+  LUNCH
+  DINNER
+  GENERAL
+  CAFE // Used for dummy event for Cafe eateries (ones with no menus)
+  PANTS // Pants
+}
+
+enum DietaryPreferences {
+  VEGAN
+  VEGETARIAN
+  PESCATARIAN
+  HALAL
+  KOSHER
+  GLUTEN_FREE
+}
+
+enum Allergens {
+  GLUTEN
+  NUTS
+  SEAFOOD
+  LACTOSE
+}
+
+model Eatery {
+  id             Int              @id @default(autoincrement())
+  cornellId      Int?
+  announcements  String[]
+  name           String
+  shortName      String
+  about          String
+  cornellDining  Boolean
+  menuSummary    String
+  imageUrl       String
+  campusArea     CampusArea
+  onlineOrderUrl String
+  contactPhone   String
+  contactEmail   String
+  latitude       Float
+  longitude      Float
+  location       String
+  paymentMethods PaymentMethods[]
+  eateryType     EateryType
+  createdAt      DateTime         @default(now())
+
+  events            Event[]
+  user              User?             @relation(fields: [userId], references: [id])
+  userId            Int?
+  favoritedEateries FavoritedEatery[]
+  reports           Report[]
+}
+
+model Event {
+  id             Int       @id @default(autoincrement())
+  type           EventType
+  date           DateTime
+  startTimestamp Int
+  endTimestamp   Int
+  upvotes        Int
+  downvotes      Int
+  createdAt      DateTime
+
+  eatery   Eatery @relation(fields: [eateryId], references: [id])
+  eateryId Int
+
+  menu Category[]
+
+  @@index([date])
+}
+
+model Category {
+  id        Int      @id @default(autoincrement())
+  name      String
+  createdAt DateTime
+
+  event   Event  @relation(fields: [eventId], references: [id])
+  eventId Int
+  items   Item[]
+}
+
+model Item {
+  id                 Int                  @id @default(autoincrement())
+  name               String
+  basePrice          Int
+  dietaryPreferences DietaryPreferences[]
+  allergens          Allergens[]
+  createdAt          DateTime
+
+  category       Category        @relation(fields: [categoryId], references: [id])
+  categoryId     Int
+  user           User?           @relation(fields: [userId], references: [id])
+  userId         Int?
+  favoritedItems FavoritedItem[]
 }
 
 model User {
-  id           Int      @id @default(autoincrement())
-  name         String?
-  email        String   @unique
-  refreshToken String?  @unique
-  firebaseId   String?  @unique
-  isAdmin      Boolean  @default(false)
-  createdAt    DateTime @default(now())
+  id       Int    @id @default(autoincrement())
+  deviceId String
 
-  courseOfferingEnrollments CourseOfferingEnrollment[]
-  teamMemberships           TeamMembership[]
+  favoriteEateries  Eatery[]
+  favoriteItems     Item[]
+  fcmTokens         FCMToken[]
+  reports           Report[]
+  favoritedEateries FavoritedEatery[]
+  favoritedItems    FavoritedItem[]
 }
 
-model Course {
-  id         Int      @id @default(autoincrement())
-  name       String
-  number     Int
-  department String
-  createdAt  DateTime @default(now())
+model FavoritedEatery {
+  user     User   @relation(fields: [userId], references: [id])
+  userId   Int
+  eatery   Eatery @relation(fields: [eateryId], references: [id])
+  eateryId Int
 
-  offerings CourseOffering[]
+  @@id([userId, eateryId])
 }
 
-model Semester {
-  id        Int      @id @default(autoincrement())
-  season    String
-  year      Int
-  startDate DateTime
-  endDate   DateTime
-  createdAt DateTime @default(now())
-
-  offerings CourseOffering[]
-}
-
-model CourseOffering {
-  id        Int      @id @default(autoincrement())
-  settings  Json
-  createdAt DateTime @default(now())
-
-  course     Course   @relation(fields: [courseId], references: [id])
-  courseId   Int
-  semester   Semester @relation(fields: [semesterId], references: [id])
-  semesterId Int
-
-  enrollments CourseOfferingEnrollment[]
-  teams       Team[]
-
-  @@unique([courseId, semesterId])
-}
-
-model Team {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique
-  createdAt DateTime @default(now())
-
-  CourseOffering   CourseOffering @relation(fields: [courseOfferingId], references: [id])
-  courseOfferingId Int
-
-  members TeamMembership[]
-}
-
-model CourseOfferingEnrollment {
-  role CourseOfferingRole
-
-  user             User           @relation(fields: [userId], references: [id])
-  userId           Int
-  courseOffering   CourseOffering @relation(fields: [courseOfferingId], references: [id])
-  courseOfferingId Int
-
-  @@id([userId, courseOfferingId])
-}
-
-model TeamMembership {
+model FavoritedItem {
   user   User @relation(fields: [userId], references: [id])
   userId Int
-  team   Team @relation(fields: [teamId], references: [id])
-  teamId Int
+  item   Item @relation(fields: [itemId], references: [id])
+  itemId Int
 
-  @@id([userId, teamId])
+  @@id([userId, itemId])
 }
 
-// Add deployments table
+model FCMToken {
+  id    Int    @id @default(autoincrement())
+  token String
+
+  user   User @relation(fields: [userId], references: [id])
+  userId Int
+}
+
+model Report {
+  id        Int      @id @default(autoincrement())
+  netid     String
+  content   String
+  createdAt DateTime
+
+  user     User   @relation(fields: [userId], references: [id])
+  userId   Int
+  eatery   Eatery @relation(fields: [eateryId], references: [id])
+  eateryId Int
+}
