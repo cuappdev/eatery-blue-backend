@@ -1,0 +1,97 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum CourseOfferingRole {
+  INSTRUCTOR
+  STUDENT
+  VIEWER
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  name         String?
+  email        String   @unique
+  refreshToken String?  @unique
+  firebaseId   String?  @unique
+  isAdmin      Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  courseOfferingEnrollments CourseOfferingEnrollment[]
+  teamMemberships           TeamMembership[]
+}
+
+model Course {
+  id         Int      @id @default(autoincrement())
+  name       String
+  number     Int
+  department String
+  createdAt  DateTime @default(now())
+
+  offerings CourseOffering[]
+}
+
+model Semester {
+  id        Int      @id @default(autoincrement())
+  season    String
+  year      Int
+  startDate DateTime
+  endDate   DateTime
+  createdAt DateTime @default(now())
+
+  offerings CourseOffering[]
+}
+
+model CourseOffering {
+  id        Int      @id @default(autoincrement())
+  settings  Json
+  createdAt DateTime @default(now())
+
+  course     Course   @relation(fields: [courseId], references: [id])
+  courseId   Int
+  semester   Semester @relation(fields: [semesterId], references: [id])
+  semesterId Int
+
+  enrollments CourseOfferingEnrollment[]
+  teams       Team[]
+
+  @@unique([courseId, semesterId])
+}
+
+model Team {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  createdAt DateTime @default(now())
+
+  CourseOffering   CourseOffering @relation(fields: [courseOfferingId], references: [id])
+  courseOfferingId Int
+
+  members TeamMembership[]
+}
+
+model CourseOfferingEnrollment {
+  role CourseOfferingRole
+
+  user             User           @relation(fields: [userId], references: [id])
+  userId           Int
+  courseOffering   CourseOffering @relation(fields: [courseOfferingId], references: [id])
+  courseOfferingId Int
+
+  @@id([userId, courseOfferingId])
+}
+
+model TeamMembership {
+  user   User @relation(fields: [userId], references: [id])
+  userId Int
+  team   Team @relation(fields: [teamId], references: [id])
+  teamId Int
+
+  @@id([userId, teamId])
+}
+
+// Add deployments table

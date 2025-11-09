@@ -1,0 +1,106 @@
+# ------------------------------------
+# Dependencies and Node Modules
+# ------------------------------------
+
+# npm packages
+/node_modules
+# yarn and pnpm lock files (if used)
+yarn.lock
+pnpm-lock.yaml
+
+
+# ------------------------------------
+# Build / Compiled Files (if applicable)
+# ------------------------------------
+
+# Production build output folder
+/dist
+/build
+
+# TypeScript compiled files
+*.tsbuildinfo
+
+
+# ------------------------------------
+# Log Files and Crash Reports
+# ------------------------------------
+
+# Logs and debug files
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.npm/
+.node_repl_history
+
+# Test coverage
+/coverage
+.nyc_output
+
+# Database files
+*.sqlite
+*.db
+/prisma/*.db
+/prisma/*.db-journal
+
+
+# ------------------------------------
+# Environment Variables & Secrets
+# ------------------------------------
+
+# Environment variables file
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Firebase service account (sensitive)
+firebase-service-account.json
+
+
+# ------------------------------------
+# Temporary and Cache Files
+# ------------------------------------
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+.parcel-cache/
+
+
+# ------------------------------------
+# OS and Editor Specific Files
+# ------------------------------------
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# JetBrains IDEs (WebStorm, IntelliJ)
+.idea/
+*.iml
+
+# Vim
+*~
+*.swp
+*.swo
+
+
+# ------------------------------------
+# Generated Files
+# ------------------------------------
+
+/src/generated/
