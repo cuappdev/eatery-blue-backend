@@ -1,35 +1,35 @@
-name: Deploy Staging Backend
+# name: Deploy Staging Backend
 
-on:
-  push:
-    branches: ['main']
-  workflow_dispatch:
+# on:
+#   push:
+#     branches: ['main']
+#   workflow_dispatch:
 
-jobs:
-  deploy:
-    runs-on: self-hosted-staging
-    timeout-minutes: 15
+# jobs:
+#   deploy:
+#     runs-on: self-hosted-staging
+#     timeout-minutes: 15
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v4
 
-      - name: Build Docker image
-        run: |
-          docker build -t project-showcase-backend:latest .
+#       - name: Build Docker image
+#         run: |
+#           docker build -t project-showcase-backend:latest .
 
-      - name: Deploy new container
-        run: |
-          # Stop and remove existing container if running
-          docker stop project-showcase-backend || true
-          docker rm project-showcase-backend || true
+#       - name: Deploy new container
+#         run: |
+#           # Stop and remove existing container if running
+#           docker stop project-showcase-backend || true
+#           docker rm project-showcase-backend || true
 
-          # Run new container
-          docker run -d \
-            --name project-showcase-backend \
-            --restart unless-stopped \
-            --network projects_network \
-            --env-file ${{ secrets.ENV_FILE_PATH }} \
-            -v ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PATH }}:/app/firebase-service-account.json:ro \
-            -v ${{ secrets.DATABASE_PATH }}:/app/data/sqlite.db \
-            project-showcase-backend:latest
+#           # Run new container
+#           docker run -d \
+#             --name project-showcase-backend \
+#             --restart unless-stopped \
+#             --network projects_network \
+#             --env-file ${{ secrets.ENV_FILE_PATH }} \
+#             -v ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PATH }}:/app/firebase-service-account.json:ro \
+#             -v ${{ secrets.DATABASE_PATH }}:/app/data/sqlite.db \
+#             project-showcase-backend:latest
