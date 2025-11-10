@@ -38,25 +38,58 @@ enum EventType {
   PANTS // Pants
 }
 
-enum DietaryPreferences {
-  VEGAN
-  VEGETARIAN
-  PESCATARIAN
-  HALAL
-  KOSHER
-  GLUTEN_FREE
+model User {
+  id       Int    @id @default(autoincrement())
+  deviceId String @unique
+
+  fcmTokens          FCMToken[]
+  reports            Report[]
+  favoritedEateries  FavoritedEatery[]
+  favoritedItemNames String[]
+  userEventVotes     UserEventVote[]
+
+  @@index([deviceId])
+  @@index(favoritedItemNames, type: Gin) // The performance magic
 }
 
-enum Allergens {
-  GLUTEN
-  NUTS
-  SEAFOOD
-  LACTOSE
+model FavoritedEatery {
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId   Int
+  eatery   Eatery @relation(fields: [eateryId], references: [id])
+  eateryId Int
+
+  @@id([userId, eateryId])
+}
+
+model FCMToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  createdAt DateTime @default(now())
+
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId Int
+
+  @@index([userId])
+}
+
+model Report {
+  id        Int      @id @default(autoincrement())
+  netid     String?
+  content   String
+  createdAt DateTime @default(now())
+
+  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId   Int
+  eatery   Eatery? @relation(fields: [eateryId], references: [id], onDelete: SetNull)
+  eateryId Int?
+
+  @@index([eateryId])
+  @@index([userId])
 }
 
 model Eatery {
   id             Int              @id @default(autoincrement())
-  cornellId      Int?
+  cornellId      Int?             @unique
   announcements  String[]
   name           String
   shortName      String
@@ -65,9 +98,9 @@ model Eatery {
   menuSummary    String
   imageUrl       String
   campusArea     CampusArea
-  onlineOrderUrl String
-  contactPhone   String
-  contactEmail   String
+  onlineOrderUrl String?
+  contactPhone   String?
+  contactEmail   String?
   latitude       Float
   longitude      Float
   location       String
@@ -76,8 +109,6 @@ model Eatery {
   createdAt      DateTime         @default(now())
 
   events            Event[]
-  user              User?             @relation(fields: [userId], references: [id])
-  userId            Int?
   favoritedEateries FavoritedEatery[]
   reports           Report[]
 }
@@ -85,92 +116,66 @@ model Eatery {
 model Event {
   id             Int       @id @default(autoincrement())
   type           EventType
-  date           DateTime
-  startTimestamp Int
-  endTimestamp   Int
-  upvotes        Int
-  downvotes      Int
-  createdAt      DateTime
+  startTimestamp DateTime
+  endTimestamp   DateTime
+  upvotes        Int       @default(0)
+  downvotes      Int       @default(0)
+  createdAt      DateTime  @default(now())
 
-  eatery   Eatery @relation(fields: [eateryId], references: [id])
+  eatery   Eatery @relation(fields: [eateryId], references: [id], onDelete: Cascade)
   eateryId Int
 
-  menu Category[]
+  menu           Category[]
+  userEventVotes UserEventVote[]
 
-  @@index([date])
+  @@index([eateryId, startTimestamp, endTimestamp])
+}
+
+model UserEventVote {
+  upvoted Boolean
+
+  user    User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId  Int
+  event   Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId Int
+
+  @@id([userId, eventId])
+  @@index([eventId])
 }
 
 model Category {
   id        Int      @id @default(autoincrement())
   name      String
-  createdAt DateTime
+  createdAt DateTime @default(now())
 
-  event   Event  @relation(fields: [eventId], references: [id])
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
   eventId Int
   items   Item[]
+
+  @@index([eventId])
 }
 
 model Item {
-  id                 Int                  @id @default(autoincrement())
-  name               String
-  basePrice          Int
-  dietaryPreferences DietaryPreferences[]
-  allergens          Allergens[]
-  createdAt          DateTime
-
-  category       Category        @relation(fields: [categoryId], references: [id])
-  categoryId     Int
-  user           User?           @relation(fields: [userId], references: [id])
-  userId         Int?
-  favoritedItems FavoritedItem[]
-}
-
-model User {
-  id       Int    @id @default(autoincrement())
-  deviceId String
-
-  favoriteEateries  Eatery[]
-  favoriteItems     Item[]
-  fcmTokens         FCMToken[]
-  reports           Report[]
-  favoritedEateries FavoritedEatery[]
-  favoritedItems    FavoritedItem[]
-}
-
-model FavoritedEatery {
-  user     User   @relation(fields: [userId], references: [id])
-  userId   Int
-  eatery   Eatery @relation(fields: [eateryId], references: [id])
-  eateryId Int
-
-  @@id([userId, eateryId])
-}
-
-model FavoritedItem {
-  user   User @relation(fields: [userId], references: [id])
-  userId Int
-  item   Item @relation(fields: [itemId], references: [id])
-  itemId Int
-
-  @@id([userId, itemId])
-}
-
-model FCMToken {
-  id    Int    @id @default(autoincrement())
-  token String
-
-  user   User @relation(fields: [userId], references: [id])
-  userId Int
-}
-
-model Report {
   id        Int      @id @default(autoincrement())
-  netid     String
-  content   String
-  createdAt DateTime
+  name      String
+  basePrice Decimal?
+  createdAt DateTime @default(now())
 
-  user     User   @relation(fields: [userId], references: [id])
-  userId   Int
-  eatery   Eatery @relation(fields: [eateryId], references: [id])
-  eateryId Int
+  category           Category            @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  categoryId         Int
+  dietaryPreferences DietaryPreference[]
+  allergens          Allergen[]
+
+  @@index([categoryId])
+  @@index([name])
+}
+
+model DietaryPreference {
+  name  String @id @unique
+  items Item[]
+}
+
+model Allergen {
+  name  String @id @unique
+  items Item[]
 }
