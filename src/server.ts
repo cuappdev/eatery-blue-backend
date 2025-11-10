@@ -9,7 +9,7 @@ import courseRouter from './courses/courseRouter.js';
 import { requireAuth } from './middleware/authentication.js';
 import { globalErrorHandler } from './middleware/errorHandler.js';
 import { requestLogger } from './middleware/logger.js';
-import { ipRateLimiter, userRateLimiter } from './middleware/rateLimit.js';
+import { ipRateLimiter } from './middleware/rateLimit.js';
 import { prisma } from './prisma.js';
 
 const app = express();
@@ -46,12 +46,11 @@ router.get('/health', async (_: Request, res: Response) => {
   }
 });
 
-// Public authentication routes
+// Public routes
 router.use('/auth', authRouter);
 
-// Protected routes (require authentication)
+// Protected routes (require GET authentication)
 router.use(requireAuth);
-router.use(userRateLimiter);
 router.use('/courses', courseRouter);
 
 app.use(router);
