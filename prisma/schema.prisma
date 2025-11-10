@@ -168,10 +168,6 @@ model Item {
 
   @@index([categoryId])
   @@index([name])
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 9934acb2fd636275bdf7320fb404ff0cbe51ea16
 }
 
 model DietaryPreference {
@@ -182,19 +178,4 @@ model DietaryPreference {
 model Allergen {
   name  String @id @unique
   items Item[]
-<<<<<<< HEAD
-=======
->>>>>>> 9934acb (add notification and firebase logic)
-}
-
-model DietaryPreference {
-  name  String @id @unique
-  items Item[]
-}
-
-model Allergen {
-  name  String @id @unique
-  items Item[]
-=======
->>>>>>> 9934acb2fd636275bdf7320fb404ff0cbe51ea16
 }
