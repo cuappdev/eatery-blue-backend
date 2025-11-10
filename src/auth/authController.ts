@@ -5,7 +5,7 @@ import { FirebaseAppError } from 'firebase-admin/app';
 
 import type { Request, Response } from 'express';
 
-import firebaseAdmin from '../firebase.js';
+import { firebaseAdmin } from '../firebase.js';
 import { prisma } from '../prisma.js';
 import { ForbiddenError, UnauthorizedError } from '../utils/AppError.js';
 
