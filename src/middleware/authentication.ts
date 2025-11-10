@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import type { NextFunction, Request, Response } from 'express';
 
 import type { AuthJwtPayload } from '../types/express/index.js';
-import { ForbiddenError, UnauthorizedError } from '../utils/AppError.js';
+import { UnauthorizedError } from '../utils/AppError.js';
 
 export const requireAuth = (
   req: Request,
@@ -36,18 +36,5 @@ export const requireAuth = (
     req.user = decodedToken as AuthJwtPayload;
   });
 
-  return next();
-};
-
-// Middleware to require admin role
-// Must be used after requireAuth
-export const requireAdmin = (
-  req: Request,
-  _res: Response,
-  next: NextFunction,
-) => {
-  if (!req.user?.isAdmin) {
-    throw new ForbiddenError('Admin access required');
-  }
   return next();
 };

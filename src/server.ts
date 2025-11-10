@@ -1,4 +1,3 @@
-import cookieParser from 'cookie-parser';
 import 'dotenv/config';
 import helmet from 'helmet';
 
@@ -10,7 +9,7 @@ import courseRouter from './courses/courseRouter.js';
 import { requireAuth } from './middleware/authentication.js';
 import { globalErrorHandler } from './middleware/errorHandler.js';
 import { requestLogger } from './middleware/logger.js';
-import { userRateLimiter } from './middleware/rateLimit.js';
+import { ipRateLimiter, userRateLimiter } from './middleware/rateLimit.js';
 import { prisma } from './prisma.js';
 
 const app = express();
@@ -21,7 +20,7 @@ app.set('trust proxy', 1);
 app.use(requestLogger);
 app.use(helmet());
 app.use(express.json({ limit: '10kb' }));
-app.use(cookieParser());
+app.use(ipRateLimiter);
 
 const router = express.Router();
 
