@@ -11,7 +11,9 @@
     "dev": "NODE_ENV=development nodemon -x tsx src/server.ts",
     "lint": "eslint '{src,test}/**/*.ts' --fix",
     "format": "prettier --write '{src,test}/**/*.ts'",
-    "seed": "tsx prisma/seed.ts"
+    "seed": "tsx prisma/seed.ts",
+    "send-notifications": "tsx prisma/send-notifications.ts",
+    "test-noti-setup": "tsx src/utils/test-notification-setup.ts"
   },
   "repository": {
     "type": "git",
@@ -26,10 +28,13 @@
   "homepage": "https://github.com/cuappdev/eatery-blue-backend#readme",
   "dependencies": {
     "@prisma/client": "^6.16.2",
+    "cookie-parser": "^1.4.7",
+    "date-fns": "^4.1.0",
+    "date-fns-tz": "^3.2.0",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "express-rate-limit": "^8.1.0",
-    "firebase-admin": "^13.5.0",
+    "firebase-admin": "^13.6.0",
     "helmet": "^8.1.0",
     "zod": "^4.1.12"
   },
@@ -46,8 +51,9 @@
     "globals": "^15.0.0",
     "nodemon": "^3.1.10",
     "prettier": "^3.6.2",
-    "prisma": "^6.16.2",
-    "tsx": "^4.20.5",
-    "typescript": "^5.9.2"
+    "prisma": "^6.19.0",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
   }
 }

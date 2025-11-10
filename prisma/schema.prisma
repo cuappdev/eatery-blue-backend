@@ -168,6 +168,19 @@ model Item {
 
   @@index([categoryId])
   @@index([name])
+<<<<<<< HEAD
+}
+
+model DietaryPreference {
+  name  String @id @unique
+  items Item[]
+}
+
+model Allergen {
+  name  String @id @unique
+  items Item[]
+=======
+>>>>>>> 9934acb (add notification and firebase logic)
 }
 
 model DietaryPreference {
