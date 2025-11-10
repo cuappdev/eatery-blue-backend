@@ -1,9 +1,13 @@
 import type { Request, Response } from 'express';
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 import { firebaseAdmin } from '../firebase.js';
 >>>>>>> 9934acb (add notification and firebase logic)
+=======
+import { firebaseAdmin } from '../firebase.js';
+>>>>>>> 9934acb2fd636275bdf7320fb404ff0cbe51ea16
 import { prisma } from '../prisma.js';
 
 
