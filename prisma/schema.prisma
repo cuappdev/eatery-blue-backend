@@ -26,6 +26,9 @@ enum EateryType {
   DINING_ROOM
   CAFE
   COFFEE_SHOP
+  FOOD_COURT
+  CONVENIENCE_STORE
+  CART
 }
 
 enum EventType {
@@ -105,7 +108,7 @@ model Eatery {
   longitude      Float
   location       String
   paymentMethods PaymentMethods[]
-  eateryType     EateryType
+  eateryTypes     EateryType[]
   createdAt      DateTime         @default(now())
 
   events            Event[]
