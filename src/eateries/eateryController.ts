@@ -1,30 +1,35 @@
 import type { NextFunction, Request, Response } from 'express';
 
+import { appCache } from '../utils/cache.js';
 import { EateryService } from './eateryService.js';
 
 export class EateryController {
-  static async getAllEateries(
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> {
+  static getAllEateries(req: Request, res: Response, next: NextFunction): void {
     try {
-      const allEateries = await EateryService.getAllEateries();
-      res.type('application/json').send(allEateries);
+      const etag = appCache.get<string>('allEateriesEtag'); // etag with time of last data refresh
+      if (etag) {
+        res.setHeader('ETag', etag);
+        if (req.headers['if-none-match'] === etag) {
+          res.status(304).end();
+          return;
+        }
+      }
+      const allEateries = EateryService.getAllEateries();
+      res.status(200).type('application/json').send(allEateries);
     } catch (error) {
       next(error);
     }
   }
 
-  static async getEateryById(
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> {
+  static getEateryById(req: Request, res: Response, next: NextFunction): void {
     try {
-      const id = parseInt(req.params.id, 10);
-      const eatery = await EateryService.getEateryById(id);
-      res.json(eatery);
+      const id = Number(req.params.id);
+      if (!Number.isInteger(id) || id < 0) {
+        res.status(400).json({ error: 'id must be a positive integer' });
+        return;
+      }
+      const eatery = EateryService.getEateryById(id);
+      res.status(200).json(eatery);
     } catch (error) {
       next(error);
     }
