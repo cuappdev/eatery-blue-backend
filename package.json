@@ -11,7 +11,8 @@
     "dev": "NODE_ENV=development nodemon -x tsx src/server.ts",
     "lint": "eslint '{src,test}/**/*.ts' --fix",
     "format": "prettier --write '{src,test}/**/*.ts'",
-    "seed": "tsx prisma/seed.ts"
+    "seed": "tsx prisma/seed.ts",
+    "scrape": "tsx prisma/scraper.ts"
   },
   "repository": {
     "type": "git",
