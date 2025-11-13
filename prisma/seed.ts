@@ -18,7 +18,6 @@ async function main() {
   if (adminEmails.length === 0) {
     console.log('No admin emails found in ADMIN_EMAILS environment variable.');
     console.log('Skipping admin user seeding.');
-    return;
   }
 
   console.log(`Found ${adminEmails.length} admin email(s) to seed.`);
@@ -58,8 +57,68 @@ async function main() {
     }
   }
 
+  try {
+    const testEatery = await prisma.eatery.upsert({
+      // Use a unique cornellId to find the eatery
+      where: { cornellId: 9999 },
+      // If it exists, do nothing
+      update: {},
+      // If it doesn't exist, create it with all required fields
+      create: {
+        cornellId: 9999,
+        name: 'Test Eatery',
+        shortName: 'Test',
+        about: 'A simple eatery for testing.',
+        cornellDining: false,
+        menuSummary: 'Test items and burgers',
+        imageUrl: 'https://placehold.co/600x400/ccc/fff?text=Test+Eatery',
+        campusArea: 'CENTRAL',
+        location: 'Ho Plaza',
+        latitude: 42.4475,
+        longitude: -76.483,
+        paymentMethods: ['CASH', 'CARD'],
+        eateryType: 'CAFE',
+        events: {
+          create: [
+            {
+              type: 'GENERAL',
+              startTimestamp: new Date('2025-11-12T09:00:00-05:00'),
+              endTimestamp: new Date('2025-11-12T17:00:00-05:00'),
+              menu: {
+                create: [
+                  {
+                    name: 'Main Menu',
+                    items: {
+                      create: [
+                        {
+                          name: 'Test Burger',
+                          basePrice: 10.99,
+                        },
+                        {
+                          name: 'Test Fries',
+                          basePrice: 4.5,
+                        },
+                      ],
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      },
+    });
+    console.log(
+      `Created or found test eatery: ${testEatery.name} (ID: ${testEatery.id})`,
+    );
+  } catch (error) {
+    console.error('Failed to create test eatery:', error);
+  }
+
   console.log('Seed completed!');
 }
+
+
 
 main()
   .catch((e) => {
