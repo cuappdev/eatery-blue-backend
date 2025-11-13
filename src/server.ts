@@ -6,6 +6,7 @@ import type { Request, Response } from 'express';
 
 import authRouter from './auth/authRouter.js';
 import courseRouter from './courses/courseRouter.js';
+import eateryRouter from './eateries/eateryRouter.js';
 import { requireAuth } from './middleware/authentication.js';
 import { globalErrorHandler } from './middleware/errorHandler.js';
 import { requestLogger } from './middleware/logger.js';
@@ -48,6 +49,7 @@ router.get('/health', async (_: Request, res: Response) => {
 
 // Public routes
 router.use('/auth', authRouter);
+router.use('/eateries', eateryRouter);
 
 // Protected routes (require GET authentication)
 router.use(requireAuth);

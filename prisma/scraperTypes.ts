@@ -103,3 +103,55 @@ export type RawScrapedData = {
     responseDttm: string
   }
 }
+
+export type RawStaticEatery = {
+  id: number;
+  slug: string;
+  name: string;
+  nameshort: string;
+  about: string;
+  aboutshort?: string;
+  cornellDining?: boolean;
+  contactPhone?: string | null;
+  contactEmail?: string | null;
+  latitude: number;
+  longitude: number;
+  location: string;
+  campusArea: {
+    descr: string;
+    descrshort: string;
+  };
+  eateryTypes: Array<{
+    descr: string;
+    descrshort: string;
+  }>;
+  onlineOrdering?: boolean;
+  onlineOrderUrl?: string | null;
+  operatingHours: Array<{
+    weekday: string;
+    events: Array<{
+      descr: string;
+      start: string;
+      end: string;
+      menu: Array<{
+        category: string;
+        sortIdx: number;
+        items: Array<{
+          item: string;
+          healthy: boolean;
+          sortIdx: number;
+        }>;
+      }>;
+    }>;
+  }>;
+  payMethods: Array<{
+    descr: string;
+    descrshort: string;
+  }>;
+  announcements?: string[];
+  diningItems?: Array<{
+    item: string;
+    healthy: boolean;
+    category: string;
+  }>;
+};

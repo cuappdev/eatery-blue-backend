@@ -8,10 +8,12 @@ datasource db {
 }
 
 enum CampusArea {
+  EAST
   WEST
   NORTH
   CENTRAL
   COLLEGETOWN
+  SOUTH
   NONE
 }
 
@@ -20,6 +22,7 @@ enum PaymentMethod {
   CASH
   CARD
   BRB
+  FREE
 }
 
 enum EateryType {
@@ -29,6 +32,7 @@ enum EateryType {
   FOOD_COURT
   CONVENIENCE_STORE
   CART
+  GENERAL
 }
 
 enum EventType {
@@ -100,6 +104,7 @@ model Eatery {
   name           String
   shortName      String
   about          String
+  shortAbout     String
   cornellDining  Boolean
   menuSummary    String
   imageUrl       String
