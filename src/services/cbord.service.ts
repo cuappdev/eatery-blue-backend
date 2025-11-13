@@ -12,6 +12,7 @@ if (!CBORD_BASE_URL) {
 
 const CBORD_USER_URL = `${CBORD_BASE_URL}/user`;
 const CBORD_AUTH_URL = `${CBORD_BASE_URL}/authentication`;
+const CBORD_COMMERCE_URL = `${CBORD_BASE_URL}/commerce`;
 
 interface CbordResponse<T> {
   response: T | null;
@@ -19,6 +20,21 @@ interface CbordResponse<T> {
     message: string;
   } | null;
 }
+
+type CbordAccount = {
+  accountDisplayName: string;
+  balance: number;
+  [key: string]: unknown;
+};
+
+type CbordTransaction = {
+  amount: number;
+  tenderId: string;
+  accountName: string;
+  postedDate: string;
+  locationName: string;
+  [key: string]: unknown;
+};
 
 /**
  * Wrapper for making requests to the CBORD API.
@@ -150,7 +166,100 @@ async function authenticatePin(deviceId: string, pin: string): Promise<string> {
   return result.response;
 }
 
+/**
+ * Fetches and parses account balances
+ */
+async function retrieveAccounts(sessionId: string) {
+  const payload = {
+    method: 'retrieveAccounts',
+    params: {
+      sessionId: sessionId,
+    },
+  };
+
+  const result = await cbordRequest<{ accounts: CbordAccount[] }>(
+    CBORD_COMMERCE_URL,
+    payload,
+  );
+  handleCbordException(result);
+
+  // Parse accounts (logic from old Django app)
+  let brbAccount = null;
+  let cityBucksAccount = null;
+  let laundryAccount = null;
+
+  for (const account of result.response?.accounts || []) {
+    const displayName = account.accountDisplayName || '';
+    if (displayName.includes('Big Red Bucks') && !brbAccount) {
+      brbAccount = account;
+    }
+    if (
+      displayName.includes('City Bucks') &&
+      !displayName.includes('GET') &&
+      !cityBucksAccount
+    ) {
+      cityBucksAccount = account;
+    }
+    if (displayName.includes('Laundry') && !laundryAccount) {
+      laundryAccount = account;
+    }
+  }
+
+  return {
+    brb: brbAccount
+      ? {
+          name: brbAccount.accountDisplayName,
+          balance: brbAccount.balance,
+        }
+      : null,
+    city_bucks: cityBucksAccount
+      ? {
+          name: cityBucksAccount.accountDisplayName,
+          balance: cityBucksAccount.balance,
+        }
+      : null,
+    laundry: laundryAccount
+      ? {
+          name: laundryAccount.accountDisplayName,
+          balance: laundryAccount.balance,
+        }
+      : null,
+  };
+}
+
+/**
+ * Fetches and parses transaction history.
+ */
+async function retrieveTransactionHistory(sessionId: string) {
+  const payload = {
+    method: 'retrieveTransactionHistoryWithinDateRange',
+    params: {
+      paymentSystemType: 0,
+      queryCriteria: {
+        maxReturnMostRecent: 100, // Limit to 100 most recent for now
+      },
+      sessionId: sessionId,
+    },
+  };
+
+  const result = await cbordRequest<{ transactions: CbordTransaction[] }>(
+    CBORD_COMMERCE_URL,
+    payload,
+  );
+  handleCbordException(result);
+
+  return (result.response?.transactions || []).map((txn) => ({
+    amount: txn.amount,
+    tenderId: txn.tenderId,
+    accountName: txn.accountName,
+    date: txn.postedDate,
+    location: txn.locationName,
+  }));
+}
+
 export const cbordService = {
   createPin,
   authenticatePin,
+  retrieveAccounts,
+  retrieveTransactionHistory,
 };
