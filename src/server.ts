@@ -6,6 +6,7 @@ import type { Request, Response } from 'express';
 
 import authRouter from './auth/authRouter.js';
 import courseRouter from './courses/courseRouter.js';
+import financialsRouter from './financials/financialsRouter.js';
 import { requireAuth } from './middleware/authentication.js';
 import { globalErrorHandler } from './middleware/errorHandler.js';
 import { requestLogger } from './middleware/logger.js';
@@ -52,6 +53,7 @@ router.use('/auth', authRouter);
 // Protected routes (require GET authentication)
 router.use(requireAuth);
 router.use('/courses', courseRouter);
+router.use('/financials', financialsRouter);
 
 app.use(router);
 
