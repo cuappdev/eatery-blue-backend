@@ -1,4 +1,4 @@
-import { RawCampusArea, RawEateryType, RawPayMethod } from './scraperTypes';
+import type { RawCampusArea, RawEateryType, RawPayMethod } from './scraperTypes.js';
 
 import {
   CampusArea,

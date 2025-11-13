@@ -12,6 +12,7 @@ import { globalErrorHandler } from './middleware/errorHandler.js';
 import { requestLogger } from './middleware/logger.js';
 import { ipRateLimiter } from './middleware/rateLimit.js';
 import { prisma } from './prisma.js';
+import { startScraperScheduler, runScraperSafely } from './scheduler/scraperScheduler.js';
 
 const app = express();
 
@@ -51,6 +52,19 @@ router.get('/health', async (_: Request, res: Response) => {
 router.use('/auth', authRouter);
 router.use('/eateries', eateryRouter);
 
+// Test endpoint to manually trigger scraper (remove in production or add auth)
+router.post('/test/scraper', async (_: Request, res: Response) => {
+  try {
+    await runScraperSafely();
+    res.json({ success: true, message: 'Scraper executed successfully' });
+  } catch (error) {
+    res.status(500).json({ 
+      success: false, 
+      error: error instanceof Error ? error.message : String(error) 
+    });
+  }
+});
+
 // Protected routes (require GET authentication)
 router.use(requireAuth);
 router.use('/courses', courseRouter);
@@ -73,6 +87,9 @@ const server = app.listen(port, async () => {
     console.error('Failed to connect to database:', error);
     process.exit(1);
   }
+
+  // Start the scraper scheduler
+  startScraperScheduler();
 });
 
 // Graceful shutdown

@@ -2,8 +2,8 @@ import { PrismaClient } from '@prisma/client';
 import dotenv from 'dotenv';
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import { RawScrapedData, RawEatery, RawStaticEatery } from './scraperTypes';
-import { mapCampusArea, mapEateryType, mapPaymentMethod, mapEventType, mapImageUrl, createWeeklyDate } from './mappers';
+import type { RawScrapedData, RawEatery, RawStaticEatery } from './scraperTypes.js';
+import { mapCampusArea, mapEateryType, mapPaymentMethod, mapEventType, mapImageUrl, createWeeklyDate } from './mappers.js';
 import { CampusArea, PaymentMethod, EateryType, EventType } from '@prisma/client';
 
 dotenv.config();
@@ -12,7 +12,7 @@ const prisma = new PrismaClient();
 
 async function getDiningData(): Promise<RawScrapedData> {
   const diningData = await fetch(process.env.CORNELL_DINING_API_URL as string);
-  const data = await diningData.json();
+  const data = await diningData.json() as RawScrapedData;
   return data;
 }
 
@@ -49,8 +49,6 @@ function transformStaticEatery(rawStaticEatery: RawStaticEatery) {
     }>;
   }> = [];
 
-  const baseDate = new Date();
-  
   for (const operatingHour of rawStaticEatery.operatingHours) {
     for (const event of operatingHour.events) {
       const startDate = createWeeklyDate(operatingHour.weekday, event.start);
@@ -376,7 +374,7 @@ async function testProcessEateries(numEateries: number) {
   }
 }
 
-async function main() {
+export async function main() {
   const startTime = Date.now();
   console.log('Starting scraper...\n');
 
