@@ -9,7 +9,7 @@ import courseRouter from './courses/courseRouter.js';
 import { requireAuth } from './middleware/authentication.js';
 import { globalErrorHandler } from './middleware/errorHandler.js';
 import { requestLogger } from './middleware/logger.js';
-import { ipRateLimiter, userRateLimiter } from './middleware/rateLimit.js';
+import { ipRateLimiter } from './middleware/rateLimit.js';
 import { prisma } from './prisma.js';
 
 const app = express();
