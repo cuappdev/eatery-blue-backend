@@ -10,6 +10,7 @@ import {
   addFavoriteEatery,
   addFavoriteItem,
   addFcmToken,
+  getFavoriteMatches,
   removeFavoriteEatery,
   removeFavoriteItem,
   removeFcmToken,
@@ -55,5 +56,6 @@ router.delete(
   validateRequest(favoriteEaterySchema),
   removeFavoriteEatery,
 );
+router.get('/favorites/matches', getFavoriteMatches);
 
 export default router;

@@ -1,27 +1,5 @@
 import { firebaseService, prisma } from '../src/firebase.js';
-import { getUnixTime, addHours } from 'date-fns';
-import * as admin from 'firebase-admin';
-
-function getQueryTimeWindow(): {
-  windowStartUnix: number;
-  windowEndUnix: number;
-} {
-  const timeZone = 'America/New_York';
-
-  // How many hours ahead to look for events
-  const LOOKAHEAD_HOURS = 7;
-
-  const zonedNow = new Date(
-    new Date().toLocaleString('en-US', { timeZone })
-  );
-  const start = zonedNow;
-  const end = addHours(start, LOOKAHEAD_HOURS);
-
-  return {
-    windowStartUnix: getUnixTime(start),
-    windowEndUnix: getUnixTime(end),
-  };
-}
+import { getQueryTimeWindow } from '../src/utils/time.js';
 
 function buildMessage(
   matchesByEatery: Map<string, string[]>,

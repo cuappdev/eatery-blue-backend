@@ -1,9 +1,10 @@
-import type { User } from '@prisma/client';
+import type { EventType, User } from '@prisma/client';
 
 import type { NextFunction, Request, Response } from 'express';
 
 import { prisma } from '../prisma.js';
 import { BadRequestError, NotFoundError } from '../utils/AppError.js';
+import { getTodayTimeWindow } from '../utils/time.js';
 
 /**
  * Middleware to extract deviceId from header and attach user to request.
@@ -188,5 +189,100 @@ export const removeFavoriteEatery = async (
   } catch {
     // Don't fail if they try to delete something that's not there
     res.status(200).json({ message: 'Favorite eatery removal processed.' });
+  }
+};
+
+/**
+ * Gets all of a user's favorite items that are being served today
+ * and the eateries serving them.
+ */
+export const getFavoriteMatches = async (
+  _: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const { user } = res.locals as { user: User };
+    const { favoritedItemNames } = user;
+
+    if (favoritedItemNames.length === 0) {
+      return res.json({});
+    }
+
+    const { start, end } = getTodayTimeWindow();
+
+    const eateries = await prisma.eatery.findMany({
+      where: {
+        events: {
+          some: {
+            startTimestamp: { lte: end },
+            endTimestamp: { gte: start },
+            menu: {
+              some: {
+                items: {
+                  some: {
+                    name: { in: favoritedItemNames },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      include: {
+        events: {
+          where: {
+            startTimestamp: { lte: end },
+            endTimestamp: { gte: start },
+          },
+          include: {
+            menu: {
+              include: {
+                items: {
+                  where: {
+                    name: { in: favoritedItemNames },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    // Format the response
+    const matches: Record<string, { name: string; events: EventType[] }[]> = {};
+    const userFavoritesSet = new Set(favoritedItemNames);
+
+    for (const eatery of eateries) {
+      // Use a Map to collect all unique events for each item
+      const itemToEventsMap = new Map<string, Set<EventType>>();
+
+      for (const event of eatery.events) {
+        for (const category of event.menu) {
+          for (const item of category.items) {
+            if (userFavoritesSet.has(item.name)) {
+              if (!itemToEventsMap.has(item.name)) {
+                itemToEventsMap.set(item.name, new Set<EventType>());
+              }
+              itemToEventsMap.get(item.name)!.add(event.type);
+            }
+          }
+        }
+      }
+
+      if (itemToEventsMap.size > 0) {
+        matches[eatery.name] = Array.from(itemToEventsMap.entries()).map(
+          ([itemName, eventSet]) => ({
+            name: itemName,
+            events: Array.from(eventSet).sort(),
+          }),
+        );
+      }
+    }
+
+    res.json(matches);
+  } catch (error) {
+    return next(error);
   }
 };

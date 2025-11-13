@@ -70,7 +70,7 @@ async function main() {
         shortName: 'Test',
         about: 'A simple eatery for testing.',
         cornellDining: false,
-        menuSummary: 'Test items and burgers',
+        menuSummary: 'Test items',
         imageUrl: 'https://placehold.co/600x400/ccc/fff?text=Test+Eatery',
         campusArea: 'CENTRAL',
         location: 'Ho Plaza',
@@ -82,8 +82,8 @@ async function main() {
           create: [
             {
               type: 'GENERAL',
-              startTimestamp: new Date('2025-11-12T09:00:00-05:00'),
-              endTimestamp: new Date('2025-11-12T17:00:00-05:00'),
+              startTimestamp: new Date('2025-11-12T09:00:00-05:00'), // Nov 12, 2025 9:00 AM
+              endTimestamp: new Date('2025-12-12T17:00:00-05:00'), // Dec 12, 2025 5:00 PM
               menu: {
                 create: [
                   {
@@ -91,11 +91,11 @@ async function main() {
                     items: {
                       create: [
                         {
-                          name: 'Test Burger',
+                          name: 'Pizza',
                           basePrice: 10.99,
                         },
                         {
-                          name: 'Test Fries',
+                          name: 'Matcha',
                           basePrice: 4.5,
                         },
                       ],
