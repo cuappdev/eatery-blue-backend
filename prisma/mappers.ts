@@ -1,3 +1,5 @@
+import { RawCampusArea, RawEateryType, RawPayMethod } from './scraperTypes';
+
 import {
   CampusArea,
   EateryType,
@@ -5,7 +7,7 @@ import {
   PaymentMethod,
 } from '@prisma/client';
 
-export function mapCampusArea(area: { descr: string, descrshort: string }): CampusArea {
+export function mapCampusArea(area: RawCampusArea): CampusArea {
   // Only consider descrshort for mapping
   switch (area.descrshort) {
     case 'West':
@@ -21,7 +23,7 @@ export function mapCampusArea(area: { descr: string, descrshort: string }): Camp
   }
 }
 
-export function mapPaymentMethod(method: { descr: string, descrshort: string}): PaymentMethod {
+export function mapPaymentMethod(method: RawPayMethod): PaymentMethod {
   // Only consider descrshort for mapping
   switch (method.descrshort) {
     case 'Meal Plan - Swipe':
@@ -39,7 +41,7 @@ export function mapPaymentMethod(method: { descr: string, descrshort: string}): 
   }
 }
 
-export function mapEateryType(type: { descr: string, descrshort: string }): EateryType {
+export function mapEateryType(type: RawEateryType): EateryType {
   // Only consider descr for mapping
   switch (type.descr) {
     case 'Dining Room':
@@ -61,21 +63,25 @@ export function mapEateryType(type: { descr: string, descrshort: string }): Eate
 
 export function mapEventType(eventDescription: string): EventType {
   switch (eventDescription) {
-    case 'Brunch':
-      return EventType.BRUNCH;
+    case 'Available All Day':
+      return EventType.AVAILABLE_ALL_DAY;
     case 'Breakfast':
       return EventType.BREAKFAST;
-    case 'Lunch':
-      return EventType.LUNCH;
+    case 'Brunch':
+      return EventType.BRUNCH;
     case 'Dinner':
       return EventType.DINNER;
-    case 'Cafe':
-      return EventType.CAFE;
-    case 'Pants':
-      return EventType.PANTS;
     case '':
       // Could be empty string in the case of general events (e.g. Amit Bhatia Libe Cafe since it serves all day)
-      return EventType.GENERAL;
+      return EventType.EMPTY;
+    case 'Late Lunch':
+      return EventType.LATE_LUNCH;
+    case 'Lunch':
+      return EventType.LUNCH;
+    case 'Open':
+      return EventType.OPEN;
+    case 'Pants':
+      return EventType.PANTS;
     default:
       throw new Error(`Unknown event type: ${eventDescription}`);
   }

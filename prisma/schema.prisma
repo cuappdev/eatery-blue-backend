@@ -32,12 +32,15 @@ enum EateryType {
 }
 
 enum EventType {
+  AVAILABLE_ALL_DAY
   BREAKFAST
   BRUNCH
-  LUNCH
   DINNER
-  GENERAL
-  CAFE // Used for dummy event for Cafe eateries (ones with no menus)
+  EMPTY
+  LATE_LUNCH
+  LUNCH
+  OPEN
+  GENERAL // Used for dummy event for Cafe eateries (ones with no menus)
   PANTS // Pants
 }
 
