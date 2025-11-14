@@ -6,13 +6,11 @@ import type { Request, Response } from 'express';
 
 import authRouter from './auth/authRouter.js';
 import courseRouter from './courses/courseRouter.js';
-import eateryRouter from './eateries/eateryRouter.js';
 import { requireAuth } from './middleware/authentication.js';
 import { globalErrorHandler } from './middleware/errorHandler.js';
 import { requestLogger } from './middleware/logger.js';
 import { ipRateLimiter } from './middleware/rateLimit.js';
 import { prisma } from './prisma.js';
-import { startScraperScheduler, runScraperSafely } from './scheduler/scraperScheduler.js';
 
 const app = express();
 
@@ -50,20 +48,6 @@ router.get('/health', async (_: Request, res: Response) => {
 
 // Public routes
 router.use('/auth', authRouter);
-router.use('/eateries', eateryRouter);
-
-// Test endpoint to manually trigger scraper (remove in production or add auth)
-router.post('/test/scraper', async (_: Request, res: Response) => {
-  try {
-    await runScraperSafely();
-    res.json({ success: true, message: 'Scraper executed successfully' });
-  } catch (error) {
-    res.status(500).json({ 
-      success: false, 
-      error: error instanceof Error ? error.message : String(error) 
-    });
-  }
-});
 
 // Protected routes (require GET authentication)
 router.use(requireAuth);
@@ -88,8 +72,7 @@ const server = app.listen(port, async () => {
     process.exit(1);
   }
 
-  // Start the scraper scheduler
-  startScraperScheduler();
+  // TODO: Fetch and cache any necessary data on startup
 });
 
 // Graceful shutdown

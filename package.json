@@ -11,7 +11,6 @@
     "dev": "NODE_ENV=development nodemon -x tsx src/server.ts",
     "lint": "eslint '{src,test}/**/*.ts' --fix",
     "format": "prettier --write '{src,test}/**/*.ts'",
-    "seed": "tsx prisma/seed.ts",
     "scrape": "tsx prisma/scraper.ts",
     "test:scraper": "TEST_MODE=true tsx prisma/scraper.ts",
     "migrate:static-images": "tsx prisma/migrateStaticImages.ts",
