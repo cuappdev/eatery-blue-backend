@@ -12,9 +12,7 @@
     "lint": "eslint '{src,test}/**/*.ts' --fix",
     "format": "prettier --write '{src,test}/**/*.ts'",
     "scrape": "tsx prisma/scraper.ts",
-    "test:scraper": "TEST_MODE=true tsx prisma/scraper.ts",
-    "migrate:static-images": "tsx prisma/migrateStaticImages.ts",
-    "migrate:static-images:dry-run": "DRY_RUN=true tsx prisma/migrateStaticImages.ts",
+    "scrape:scheduled": "SCHEDULED_MODE=true tsx prisma/scraper.ts",
     "studio": "prisma studio"
   },
   "repository": {
@@ -29,7 +27,6 @@
   },
   "homepage": "https://github.com/cuappdev/eatery-blue-backend#readme",
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.930.0",
     "@prisma/client": "^6.16.2",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",

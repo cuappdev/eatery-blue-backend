@@ -60,6 +60,30 @@ export type RawOperatingHour = {
   events: RawOperatingHourEvent[];
 }
 
+export type RawStaticOperatingHourEventMenuItem = {
+  item: string;
+  healthy: boolean;
+  sortIdx: number;
+}
+
+export type RawStaticOperatingHourEventMenuCategory = {
+  category: string;
+  sortIdx: number;
+  items: RawStaticOperatingHourEventMenuItem[];
+}
+
+export type RawStaticOperatingHourEvent = {
+  descr: string;
+  start: string;
+  end: string;
+  menu: RawStaticOperatingHourEventMenuCategory[];
+}
+
+export type RawStaticOperatingHour = {
+  weekday: string;
+  events: RawStaticOperatingHourEvent[];
+}
+
 export type RawEatery = {
   id: number;
   slug: string;
@@ -110,42 +134,19 @@ export type RawStaticEatery = {
   name: string;
   nameshort: string;
   about: string;
-  aboutshort?: string;
-  cornellDining?: boolean;
-  contactPhone?: string | null;
-  contactEmail?: string | null;
+  aboutshort: string;
+  cornellDining: boolean;
+  contactPhone: string | null;
+  contactEmail: string | null;
   latitude: number;
   longitude: number;
   location: string;
   campusArea: RawCampusArea;
   eateryTypes: RawEateryType[];
-  onlineOrdering?: boolean;
-  onlineOrderUrl?: string | null;
-  operatingHours: Array<{
-    weekday: string;
-    events: Array<{
-      descr: string;
-      start: string;
-      end: string;
-      menu: Array<{
-        category: string;
-        sortIdx: number;
-        items: Array<{
-          item: string;
-          healthy: boolean;
-          sortIdx: number;
-        }>;
-      }>;
-    }>;
-  }>;
-  payMethods: Array<{
-    descr: string;
-    descrshort: string;
-  }>;
-  announcements?: string[];
-  diningItems?: Array<{
-    item: string;
-    healthy: boolean;
-    category: string;
-  }>;
+  onlineOrdering: boolean;
+  onlineOrderUrl: string | null;
+  operatingHours: RawStaticOperatingHour[];
+  payMethods: RawPayMethod[];
+  announcements: string[];
+  diningItems: RawDiningItem[];
 };

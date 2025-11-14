@@ -6,6 +6,7 @@ import {
   EventType,
   PaymentMethod,
 } from '@prisma/client';
+import { EATERY_IMAGES_BASE_URL, Weekday, WEEKDAY_TO_DAY_OF_WEEK } from '../src/constants.js';
 
 export function mapCampusArea(area: RawCampusArea): CampusArea {
   // Only consider descrshort for mapping
@@ -99,71 +100,66 @@ export function mapEventType(eventDescription: string): EventType {
   }
 }
 
-// Mapping from cornellId to Digital Ocean Spaces image URL
-const CORNELL_ID_TO_IMAGE_URL: Record<number, string> = {
-  31: 'https://appdev-upload.nyc3.digitaloceanspaces.com/eatery-images/104-West.jpg',
-  7: 'https://appdev-upload.nyc3.digitaloceanspaces.com/eatery-images/Amit-Bhatia-Libe-Cafe.jpg',
-  8: 'https://appdev-upload.nyc3.digitaloceanspaces.com/eatery-images/Atrium-Cafe.jpg',
-  1: 'https://appdev-upload.nyc3.digitaloceanspaces.com/eatery-images/Bear-Necessities.jpg',
-  25: 'https://appdev-upload.nyc3.digitaloceanspaces.com/eatery-images/Becker-House-Dining.jpg',
-  10: 'https://appdev-upload.nyc3.digitaloceanspaces.com/eatery-images/Big-Red-Barn.jpg',
-  11: 'https://appdev-upload.nyc3.digitaloceanspaces.com/eatery-images/Bug-Stop-Bagels.jpg',
-  12: 'https://appdev-upload.nyc3.digitaloceanspaces.com/eatery-images/Cafe-Jennie.jpg',
-  26: 'https://appdev-upload.nyc3.digitaloceanspaces.com/eatery-images/Cook-House-Dining.jpg',
-  14: 'https://appdev-upload.nyc3.digitaloceanspaces.com/eatery-images/Cornell-Dairy-Bar.jpg',
-  41: 'https://appdev-upload.nyc3.digitaloceanspaces.com/eatery-images/Crossings-Cafe.jpg',
-  32: 'https://appdev-upload.nyc3.digitaloceanspaces.com/eatery-images/frannys.jpg',
-  16: 'https://appdev-upload.nyc3.digitaloceanspaces.com/eatery-images/Goldies-Cafe.jpg',
-  15: 'https://appdev-upload.nyc3.digitaloceanspaces.com/eatery-images/Green-Dragon.jpg',
-  24: 'https://appdev-upload.nyc3.digitaloceanspaces.com/eatery-images/Hot-Dog-Cart.jpg',
-  34: 'https://appdev-upload.nyc3.digitaloceanspaces.com/eatery-images/icecreamcart.jpg',
-  27: 'https://appdev-upload.nyc3.digitaloceanspaces.com/eatery-images/Jansens-Dining.jpg',
-  28: 'https://appdev-upload.nyc3.digitaloceanspaces.com/eatery-images/Jansens-Market.jpg',
-  29: 'https://appdev-upload.nyc3.digitaloceanspaces.com/eatery-images/Keeton-House-Dining.jpg',
-  42: 'https://appdev-upload.nyc3.digitaloceanspaces.com/eatery-images/Mann-Cafe.jpg',
-  18: 'https://appdev-upload.nyc3.digitaloceanspaces.com/eatery-images/Marthas-Cafe.jpg',
-  19: 'https://appdev-upload.nyc3.digitaloceanspaces.com/eatery-images/Mattins-Cafe.jpg',
-  33: 'https://appdev-upload.nyc3.digitaloceanspaces.com/eatery-images/mccormicks.jpg',
-  3: 'https://appdev-upload.nyc3.digitaloceanspaces.com/eatery-images/North-Star.jpg',
-  20: 'https://appdev-upload.nyc3.digitaloceanspaces.com/eatery-images/Okenshields.jpg',
-  4: 'https://appdev-upload.nyc3.digitaloceanspaces.com/eatery-images/Risley-Dining.jpg',
-  5: 'https://appdev-upload.nyc3.digitaloceanspaces.com/eatery-images/Risley-Dining.jpg', // RPCC uses same image
-  30: 'https://appdev-upload.nyc3.digitaloceanspaces.com/eatery-images/Rose-House-Dining.jpg',
-  21: 'https://appdev-upload.nyc3.digitaloceanspaces.com/eatery-images/Rustys.jpg',
-  13: 'https://appdev-upload.nyc3.digitaloceanspaces.com/eatery-images/StraightMarket.jpg',
-  23: 'https://appdev-upload.nyc3.digitaloceanspaces.com/eatery-images/Trillium.jpg',
-  43: 'https://appdev-upload.nyc3.digitaloceanspaces.com/eatery-images/Morrison-Dining.jpg',
-  44: 'https://appdev-upload.nyc3.digitaloceanspaces.com/eatery-images/novicks-cafe.jpg',
-  45: 'https://appdev-upload.nyc3.digitaloceanspaces.com/eatery-images/vets-cafe.jpg',
-  // Static eateries (negative IDs)
-  [-33]: 'https://appdev-upload.nyc3.digitaloceanspaces.com/eatery-images/Terrace.jpg',
-  [-34]: 'https://appdev-upload.nyc3.digitaloceanspaces.com/eatery-images/Macs-Cafe.jpg',
-  [-35]: 'https://appdev-upload.nyc3.digitaloceanspaces.com/eatery-images/Zeus.jpg',
-  [-36]: 'https://appdev-upload.nyc3.digitaloceanspaces.com/eatery-images/Gimme-Coffee.jpg',
-  [-37]: 'https://appdev-upload.nyc3.digitaloceanspaces.com/eatery-images/Louies-Lunch.jpg',
-  [-38]: 'https://appdev-upload.nyc3.digitaloceanspaces.com/eatery-images/Anabels-Grocery.jpg',
-  [-46]: 'https://appdev-upload.nyc3.digitaloceanspaces.com/eatery-images/Freege.jpg',
+// Mapping from cornellId to image filename (relative to base URL)
+const CORNELL_ID_TO_IMAGE_FILENAME: Record<number, string> = {
+  31: '104-West.jpg',
+  7: 'Amit-Bhatia-Libe-Cafe.jpg',
+  8: 'Atrium-Cafe.jpg',
+  1: 'Bear-Necessities.jpg',
+  25: 'Becker-House-Dining.jpg',
+  10: 'Big-Red-Barn.jpg',
+  11: 'Bug-Stop-Bagels.jpg',
+  12: 'Cafe-Jennie.jpg',
+  26: 'Cook-House-Dining.jpg',
+  14: 'Cornell-Dairy-Bar.jpg',
+  41: 'Crossings-Cafe.jpg',
+  32: 'frannys.jpg',
+  16: 'Goldies-Cafe.jpg',
+  15: 'Green-Dragon.jpg',
+  24: 'Hot-Dog-Cart.jpg',
+  34: 'icecreamcart.jpg',
+  27: 'Jansens-Dining.jpg',
+  28: 'Jansens-Market.jpg',
+  29: 'Keeton-House-Dining.jpg',
+  42: 'Mann-Cafe.jpg',
+  18: 'Marthas-Cafe.jpg',
+  19: 'Mattins-Cafe.jpg',
+  33: 'mccormicks.jpg',
+  3: 'North-Star.jpg',
+  20: 'Okenshields.jpg',
+  4: 'Risley-Dining.jpg',
+  5: 'Risley-Dining.jpg',
+  30: 'Rose-House-Dining.jpg',
+  21: 'Rustys.jpg',
+  13: 'StraightMarket.jpg',
+  23: 'Trillium.jpg',
+  43: 'Morrison-Dining.jpg',
+  44: 'novicks-cafe.jpg',
+  45: 'vets-cafe.jpg',
+  // Static eateries
+  [-33]: 'Terrace.jpg',
+  [-34]: 'Macs-Cafe.jpg',
+  [-35]: 'Zeus.jpg',
+  [-36]: 'Gimme-Coffee.jpg',
+  [-37]: 'Louies-Lunch.jpg',
+  [-38]: 'Anabels-Grocery.jpg',
+  [-46]: 'Freege.jpg',
 };
 
 export function mapImageUrl(cornellId: number): string {
-  const imageUrl = CORNELL_ID_TO_IMAGE_URL[cornellId];
-  if (!imageUrl) {
+  const imageFilename = CORNELL_ID_TO_IMAGE_FILENAME[cornellId];
+  if (!imageFilename) {
     throw new Error(`No image URL mapping found for cornellId: ${cornellId}`);
   }
-  return imageUrl;
+  return `${EATERY_IMAGES_BASE_URL}${imageFilename}`;
 }
 
 export function weekdayToDayOfWeek(weekday: string): number {
-  const weekdays: Record<string, number> = {
-    Sunday: 0,
-    Monday: 1,
-    Tuesday: 2,
-    Wednesday: 3,
-    Thursday: 4,
-    Friday: 5,
-    Saturday: 6,
-  };
-  return weekdays[weekday] ?? 1; // Default to Monday if not found
+  if (Object.values(Weekday).includes(weekday as Weekday)) {
+    return WEEKDAY_TO_DAY_OF_WEEK[weekday as Weekday];
+  }
+  // default to Monday if not found
+  return WEEKDAY_TO_DAY_OF_WEEK[Weekday.MONDAY];
 }
 
 export function parseTime(timeStr: string): { hours: number; minutes: number } {
@@ -171,13 +167,9 @@ export function parseTime(timeStr: string): { hours: number; minutes: number } {
   return { hours: hours ?? 0, minutes: minutes ?? 0 };
 }
 
-/**
- * Create a date for a specific weekday and time (for recurring weekly events)
- */
 export function createWeeklyDate(weekday: string, timeStr: string, baseDate: Date = new Date()): Date {
   const dayOfWeek = weekdayToDayOfWeek(weekday);
   const { hours, minutes } = parseTime(timeStr);
-  
   const date = new Date(baseDate);
   const currentDay = date.getDay();
   const daysUntilTarget = (dayOfWeek - currentDay + 7) % 7;

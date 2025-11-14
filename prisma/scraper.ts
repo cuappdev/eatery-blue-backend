@@ -2,9 +2,11 @@ import { PrismaClient } from '@prisma/client';
 import dotenv from 'dotenv';
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import cron from 'node-cron';
 import type { RawScrapedData, RawEatery, RawStaticEatery } from './scraperTypes.js';
 import { mapCampusArea, mapEateryType, mapPaymentMethod, mapEventType, mapImageUrl, createWeeklyDate } from './mappers.js';
 import type { CampusArea, PaymentMethod, EateryType } from '@prisma/client';
+import { DEFAULT_IMAGE_URL } from '../src/constants.js';
 
 dotenv.config();
 
@@ -79,7 +81,7 @@ function transformStaticEatery(rawStaticEatery: RawStaticEatery) {
   try {
     imageUrl = mapImageUrl(cornellId);
   } catch {
-    imageUrl = '';
+    imageUrl = DEFAULT_IMAGE_URL;
   }
 
   return {
@@ -93,21 +95,28 @@ function transformStaticEatery(rawStaticEatery: RawStaticEatery) {
       menuSummary: menuSummary,
       imageUrl: imageUrl,
       campusArea: mapCampusArea(rawStaticEatery.campusArea),
-      onlineOrderUrl: rawStaticEatery.onlineOrderUrl ?? null,
-      contactPhone: rawStaticEatery.contactPhone ?? null,
-      contactEmail: rawStaticEatery.contactEmail ?? null,
+      onlineOrderUrl: rawStaticEatery.onlineOrderUrl,
+      contactPhone: rawStaticEatery.contactPhone,
+      contactEmail: rawStaticEatery.contactEmail,
       latitude: rawStaticEatery.latitude,
       longitude: rawStaticEatery.longitude,
       location: rawStaticEatery.location,
       paymentMethods: Array.from(new Set(rawStaticEatery.payMethods.map(mapPaymentMethod))),
       eateryTypes: rawStaticEatery.eateryTypes.map(mapEateryType),
-      announcements: rawStaticEatery.announcements || [],
+      announcements: rawStaticEatery.announcements,
     },
     events,
   };
 }
 
 function transformEatery(rawEatery: RawEatery) {
+  let imageUrl: string;
+  try {
+    imageUrl = mapImageUrl(rawEatery.id);
+  } catch {
+    imageUrl = DEFAULT_IMAGE_URL;
+  }
+
   const eateryData = {
     cornellId: rawEatery.id,
     name: rawEatery.name,
@@ -116,7 +125,7 @@ function transformEatery(rawEatery: RawEatery) {
     shortAbout: rawEatery.aboutshort,
     cornellDining: rawEatery.cornellDining,
     menuSummary: rawEatery.opHoursCalcDescr,
-    imageUrl: mapImageUrl(rawEatery.id),
+    imageUrl: imageUrl,
     campusArea: mapCampusArea(rawEatery.campusArea),
     onlineOrderUrl: rawEatery.onlineOrderUrl,
     contactPhone: rawEatery.contactPhone,
@@ -282,98 +291,6 @@ async function processAllEateries(
   });
 }
 
-async function testProcessEateries(numEateries: number) {
-  console.log(`🧪 Starting test: Processing ${numEateries} eateries...\n`);
-
-  try {
-    console.log('1. Fetching dining data...');
-    const diningData = await getDiningData();
-    console.log(`   Found ${diningData.data.eateries.length} total eateries\n`);
-
-    const testEateries = diningData.data.eateries.slice(0, numEateries);
-    console.log(`2. Testing with ${testEateries.length} eateries:`);
-    testEateries.forEach((eatery, i) => {
-      console.log(`   ${i + 1}. ${eatery.name} (ID: ${eatery.id})`);
-    });
-    console.log();
-
-    console.log('3. Transforming eatery data with 5 concurrent workers...');
-    const transformResults = await transformEateriesConcurrently(testEateries, 5);
-    const transformedEateries = transformResults.map((r) => r.result);
-    console.log();
-
-    console.log('4. Processing all eateries in a single transaction...');
-    await processAllEateries(transformedEateries);
-    console.log('   ✓ Transaction completed successfully\n');
-
-    console.log('5. Verifying database results...');
-    const dbEateries = await prisma.eatery.findMany({
-      include: {
-        events: {
-          include: {
-            menu: {
-              include: {
-                items: true,
-              },
-            },
-          },
-        },
-      },
-      orderBy: {
-        cornellId: 'asc',
-      },
-    });
-
-    console.log(`   Found ${dbEateries.length} eateries in database`);
-    
-    if (dbEateries.length !== testEateries.length) {
-      throw new Error(
-        `Expected ${testEateries.length} eateries, but found ${dbEateries.length}`
-      );
-    }
-
-    let totalEvents = 0;
-    let totalCategories = 0;
-    let totalItems = 0;
-
-    for (const dbEatery of dbEateries) {
-      const events = dbEatery.events;
-      totalEvents += events.length;
-      
-      for (const event of events) {
-        const categories = event.menu;
-        totalCategories += categories.length;
-        
-        for (const category of categories) {
-          totalItems += category.items.length;
-        }
-      }
-    }
-
-    console.log(`   ✓ Total events: ${totalEvents}`);
-    console.log(`   ✓ Total categories: ${totalCategories}`);
-    console.log(`   ✓ Total items: ${totalItems}\n`);
-
-    console.log('6. Test Summary:');
-    console.log(`   ✓ All ${numEateries} eateries processed successfully`);
-    console.log(`   ✓ Transaction completed atomically for ${numEateries} eateries`);
-    console.log('   ✓ All data verified in database\n');
-
-    console.log(`✅ Test passed! All ${numEateries} eateries processed correctly.\n`);
-
-    return {
-      success: true,
-      eateriesProcessed: dbEateries.length,
-      totalEvents,
-      totalCategories,
-      totalItems,
-    };
-  } catch (error) {
-    console.error('\n❌ Test failed:', error);
-    throw error;
-  }
-}
-
 export async function main() {
   const startTime = Date.now();
   console.log('Starting scraper at', new Date(startTime).toString(), '\n');
@@ -417,16 +334,13 @@ export async function main() {
   const transformDuration = ((Date.now() - transformStartTime) / 1000).toFixed(2);
   console.log(`✓ Successfully transformed ${transformedApiEateries.length} API eateries (${transformDuration}s)\n`);
 
-  // Merge static and API eateries (API eateries override static ones if same cornellId)
   const eateryMap = new Map<number | null, typeof transformedStaticEateries[0]>();
   const overriddenEateries: Array<{ cornellId: number | null; staticName: string; apiName: string }> = [];
   
-  // Add static eateries first
   for (const eatery of transformedStaticEateries) {
     eateryMap.set(eatery.eatery.cornellId, eatery);
   }
   
-  // Override with API eateries (they take precedence)
   for (const eatery of transformedApiEateries) {
     const existingEatery = eateryMap.get(eatery.eatery.cornellId);
     if (existingEatery) {
@@ -471,15 +385,60 @@ export async function main() {
   console.log(`   - Database insertion: ${dbDuration}s`);
 }
 
-if (process.env.TEST_MODE === 'true') {
-  testProcessEateries(33)
-    .catch((e) => {
-      console.error('Error during test:', e);
-      process.exit(1);
-    })
-    .finally(async () => {
-      await prisma.$disconnect();
-    });
+let isRunning = false;
+
+async function runScraperSafely() {
+  if (isRunning) {
+    console.log(
+      '[Scheduler] Scraper is already running, skipping this execution',
+    );
+    return;
+  }
+
+  isRunning = true;
+  const startTime = Date.now();
+  console.log(
+    `[Scheduler] Starting scheduled scraper run at ${new Date().toISOString()}`,
+  );
+
+  try {
+    await main();
+    const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+    console.log(`[Scheduler] Scraper completed successfully in ${duration}s`);
+  } catch (error) {
+    const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+    console.error(`[Scheduler] Scraper failed after ${duration}s:`, error);
+  } finally {
+    isRunning = false;
+  }
+}
+
+function startScraperScheduler() {
+  const cronExpression = process.env.SCRAPER_CRON_SCHEDULE || '0 7,19 * * *';
+
+  console.log('[Scheduler] Initializing scraper scheduler...');
+  console.log('[Scheduler] Schedule: Daily at 7:00 AM and 7:00 PM');
+
+  const task = cron.schedule(cronExpression, runScraperSafely, {
+    timezone: 'America/New_York',
+  });
+
+  console.log('[Scheduler] Scraper scheduler started successfully');
+
+  return task;
+}
+
+if (process.env.SCHEDULED_MODE === 'true') {
+  startScraperScheduler();
+  console.log('[Scheduler] Scraper scheduler is running. Press Ctrl+C to stop.');
+  const gracefulShutdown = async () => {
+    console.log('[Scheduler] Shutting down gracefully...');
+    await prisma.$disconnect();
+    process.exit(0);
+  };
+  
+  process.on('SIGTERM', gracefulShutdown);
+  process.on('SIGINT', gracefulShutdown);
 } else {
   main()
     .catch((e) => {
