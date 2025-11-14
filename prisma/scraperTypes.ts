@@ -117,14 +117,8 @@ export type RawStaticEatery = {
   latitude: number;
   longitude: number;
   location: string;
-  campusArea: {
-    descr: string;
-    descrshort: string;
-  };
-  eateryTypes: Array<{
-    descr: string;
-    descrshort: string;
-  }>;
+  campusArea: RawCampusArea;
+  eateryTypes: RawEateryType[];
   onlineOrdering?: boolean;
   onlineOrderUrl?: string | null;
   operatingHours: Array<{

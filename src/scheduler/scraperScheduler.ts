@@ -6,13 +6,17 @@ let isRunning = false;
 
 export async function runScraperSafely() {
   if (isRunning) {
-    console.log('[Scheduler] Scraper is already running, skipping this execution');
+    console.log(
+      '[Scheduler] Scraper is already running, skipping this execution',
+    );
     return;
   }
 
   isRunning = true;
   const startTime = Date.now();
-  console.log(`[Scheduler] Starting scheduled scraper run at ${new Date().toISOString()}`);
+  console.log(
+    `[Scheduler] Starting scheduled scraper run at ${new Date().toISOString()}`,
+  );
 
   try {
     await runScraper();
@@ -45,4 +49,3 @@ export function startScraperScheduler() {
 
   return task;
 }
-

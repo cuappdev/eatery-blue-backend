@@ -4,7 +4,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import type { RawScrapedData, RawEatery, RawStaticEatery } from './scraperTypes.js';
 import { mapCampusArea, mapEateryType, mapPaymentMethod, mapEventType, mapImageUrl, createWeeklyDate } from './mappers.js';
-import { CampusArea, PaymentMethod, EateryType, EventType } from '@prisma/client';
+import type { CampusArea, PaymentMethod, EateryType } from '@prisma/client';
 
 dotenv.config();
 
@@ -376,11 +376,11 @@ async function testProcessEateries(numEateries: number) {
 
 export async function main() {
   const startTime = Date.now();
-  console.log('Starting scraper...\n');
+  console.log('Starting scraper at', new Date(startTime).toString(), '\n');
 
   // Load static eateries
   const staticStartTime = Date.now();
-  console.log('Loading static eateries...');
+  console.log('Loading static eateries at', new Date(staticStartTime).toString());
   const staticEateries = loadStaticEateries();
   const transformedStaticEateries: ReturnType<typeof transformStaticEatery>[] = [];
   const skippedStaticEateries: Array<{ name: string; error: string }> = [];
@@ -411,8 +411,8 @@ export async function main() {
   console.log(`Found ${diningData.data.eateries.length} eateries from API (${apiFetchDuration}s)`);
 
   const transformStartTime = Date.now();
-  console.log('Transforming API eatery data with 5 concurrent workers...');
-  const transformResults = await transformEateriesConcurrently(diningData.data.eateries, 5);
+  console.log(`Transforming API eatery data with ${process.env.WORKERS} concurrent workers...`);
+  const transformResults = await transformEateriesConcurrently(diningData.data.eateries, parseInt(process.env.WORKERS || '4', 10));
   const transformedApiEateries = transformResults.map((r) => r.result);
   const transformDuration = ((Date.now() - transformStartTime) / 1000).toFixed(2);
   console.log(`✓ Successfully transformed ${transformedApiEateries.length} API eateries (${transformDuration}s)\n`);
