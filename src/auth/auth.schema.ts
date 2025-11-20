@@ -1,7 +1,13 @@
 import { z } from 'zod';
 
-export const authorizeDeviceIdSchema = z.object({
+export const verifyDeviceUuidSchema = z.object({
   body: z.object({
-    deviceId: z.string().nonempty('Device ID is required'),
+    deviceUuid: z.string().nonempty('Device UUID is required'),
+  }),
+});
+
+export const refreshAccessTokenSchema = z.object({
+  body: z.object({
+    refreshToken: z.string().nonempty('Refresh token is required'),
   }),
 });

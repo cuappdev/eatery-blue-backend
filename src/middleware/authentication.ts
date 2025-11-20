@@ -1,5 +1,8 @@
+import jwt from 'jsonwebtoken';
+
 import type { NextFunction, Request, Response } from 'express';
 
+import type { AuthJwtPayload } from '../types/express/index.js';
 import { UnauthorizedError } from '../utils/AppError.js';
 
 export const requireAuth = (
@@ -7,6 +10,14 @@ export const requireAuth = (
   _res: Response,
   next: NextFunction,
 ) => {
+  // Development bypass
+  if (process.env.NODE_ENV === 'development') {
+    req.user = {
+      userId: 1,
+    };
+    return next();
+  }
+
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     throw new UnauthorizedError('No token provided or wrong format.');
@@ -17,8 +28,12 @@ export const requireAuth = (
     throw new UnauthorizedError('No token provided.');
   }
 
-  // TODO: Finish body when GET authentication is finalized
-  // Override Express Request type to include session info in the request object
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET!, (err, decodedToken) => {
+    if (err || !decodedToken || typeof decodedToken === 'string') {
+      throw new UnauthorizedError('Invalid token.');
+    }
+    req.user = decodedToken as AuthJwtPayload;
+  });
 
   return next();
 };

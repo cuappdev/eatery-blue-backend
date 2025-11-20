@@ -2,7 +2,12 @@ import NodeCache from 'node-cache';
 
 import type { Eatery, Event } from '@prisma/client';
 
-import { type NextFunction, type Request, type Response, Router } from 'express';
+import {
+  type NextFunction,
+  type Request,
+  type Response,
+  Router,
+} from 'express';
 
 import { EaterySchema } from '../eateries/eateries.schema.js';
 import { UnauthorizedError } from './AppError.js';
