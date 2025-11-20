@@ -5,7 +5,6 @@ import express from 'express';
 import type { Request, Response } from 'express';
 
 import authRouter from './auth/authRouter.js';
-import courseRouter from './courses/courseRouter.js';
 import { requireAuth } from './middleware/authentication.js';
 import { globalErrorHandler } from './middleware/errorHandler.js';
 import { requestLogger } from './middleware/logger.js';
@@ -51,7 +50,6 @@ router.use('/auth', authRouter);
 
 // Protected routes (require GET authentication)
 router.use(requireAuth);
-router.use('/courses', courseRouter);
 
 app.use(router);
 
