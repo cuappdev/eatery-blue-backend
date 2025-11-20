@@ -4,9 +4,6 @@ FROM node:24-slim AS builder
 # Set working directory inside the container
 WORKDIR /app
 
-# Set DATABASE_URL for Prisma (temporary for build, will be overridden at runtime)
-ENV DATABASE_URL="file:/app/data/sqlite.db"
-
 # Copy package files for better layer caching
 COPY package*.json ./
 
@@ -26,19 +23,13 @@ COPY src ./src/
 # Build the TypeScript application
 RUN npm run build
 
-# Compile seed file
-RUN npx tsc prisma/seed.ts --outDir dist/prisma --target ES2020 --moduleResolution node --module esnext --esModuleInterop
-
 # Production stage
 FROM node:24-slim
 
-# Install openssl for Prisma
+# Install openssl for Prisma (required for PostgreSQL)
 RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-
-# Set DATABASE_URL for Prisma (will be overridden by .env file at runtime)
-ENV DATABASE_URL="file:/app/data/sqlite.db"
 
 # Copy package files
 COPY package*.json ./
@@ -55,11 +46,5 @@ RUN npx prisma generate
 # Copy built application from builder stage
 COPY --from=builder /app/dist ./dist
 
-# Create directory for SQLite database
-RUN mkdir -p /app/data
-
-# Create SQLite database file
-RUN touch /app/data/sqlite.db
-
-# Start the application with migrations and seeding
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/prisma/seed.js && npm start"]
+# Start the application with migrations
+CMD ["sh", "-c", "npx prisma migrate deploy && npm start"]
