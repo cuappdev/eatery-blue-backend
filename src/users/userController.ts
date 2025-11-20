@@ -1,4 +1,4 @@
-import type { EventType, User } from '@prisma/client';
+import type { EventType } from '@prisma/client';
 
 import type { NextFunction, Request, Response } from 'express';
 
@@ -34,17 +34,12 @@ export const addFcmToken = async (
   res: Response,
 ): Promise<void> => {
   const { token } = req.body;
-  const { user } = res.locals;
+  const { userId } = req.user!;
 
   await prisma.fCMToken.upsert({
     where: { token },
-    update: {
-      userId: user.id,
-    },
-    create: {
-      token,
-      userId: user.id,
-    },
+    update: { userId },
+    create: { token, userId },
   });
 
   res.status(200).json({ message: 'Token registered successfully.' });
@@ -55,13 +50,13 @@ export const removeFcmToken = async (
   res: Response,
 ): Promise<void> => {
   const { token } = req.body;
-  const { user } = res.locals;
+  const { userId } = req.user!;
 
   try {
     await prisma.fCMToken.delete({
       where: {
         token,
-        userId: user.id,
+        userId,
       },
     });
     res.status(200).json({ message: 'Token removed successfully.' });
@@ -77,7 +72,15 @@ export const addFavoriteItem = async (
 ) => {
   try {
     const { name } = req.body;
-    const { user } = res.locals as { user: User };
+    const { userId } = req.user!;
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
 
     await prisma.user.update({
       where: { id: user.id },
@@ -91,7 +94,7 @@ export const addFavoriteItem = async (
 
     res.status(200).json({ message: 'Favorite item added.' });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 };
 
@@ -102,7 +105,15 @@ export const removeFavoriteItem = async (
 ) => {
   try {
     const { name } = req.body;
-    const { user } = res.locals as { user: User };
+    const { userId } = req.user!;
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
 
     // Filter the name out of the array
     const updatedItems = user.favoritedItemNames.filter(
@@ -118,7 +129,7 @@ export const removeFavoriteItem = async (
 
     res.status(200).json({ message: 'Favorite item removed.' });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 };
 
@@ -129,7 +140,15 @@ export const addFavoriteEatery = async (
 ) => {
   try {
     const { eateryId } = req.body;
-    const { user } = res.locals as { user: User };
+    const { userId } = req.user!;
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
 
     // Use upsert to avoid crashing if the relation already exists
     await prisma.favoritedEatery.upsert({
@@ -148,7 +167,7 @@ export const addFavoriteEatery = async (
 
     res.status(200).json({ message: 'Favorite eatery added.' });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 };
 
@@ -159,8 +178,14 @@ export const removeFavoriteEatery = async (
 ) => {
   try {
     const { eateryId } = req.body;
-    const { user } = res.locals as { user: User };
+    const { userId } = req.user!;
 
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
     await prisma.favoritedEatery.delete({
       where: {
         userId_eateryId: {
@@ -170,10 +195,12 @@ export const removeFavoriteEatery = async (
       },
     });
 
-    res.status(200).json({ message: 'Favorite eatery removed.' });
+    return res.status(200).json({ message: 'Favorite eatery removed.' });
   } catch {
     // Don't fail if they try to delete something that's not there
-    res.status(200).json({ message: 'Favorite eatery removal processed.' });
+    return res
+      .status(200)
+      .json({ message: 'Favorite eatery removal processed.' });
   }
 };
 
@@ -182,12 +209,20 @@ export const removeFavoriteEatery = async (
  * and the eateries serving them.
  */
 export const getFavoriteMatches = async (
-  _: Request,
+  req: Request,
   res: Response,
   next: NextFunction,
 ) => {
   try {
-    const { user } = res.locals as { user: User };
+    const { userId } = req.user!;
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
     const { favoritedItemNames } = user;
 
     if (favoritedItemNames.length === 0) {
