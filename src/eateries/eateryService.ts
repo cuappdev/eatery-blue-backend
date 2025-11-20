@@ -66,14 +66,12 @@ export const getEateryById = async (eateryId: number) => {
     const cachedEateries = getAllEateriesData();
     const eatery = cachedEateries.find((e) => e.id === eateryId);
 
-    if (!eatery) {
-      throw new NotFoundError('Eatery not found');
+    if (eatery) {
+      return eatery;
     }
 
-    return eatery;
-  } finally {
     // As a last resort, fetch directly from the database
-    const eatery = await prisma.eatery.findUnique({
+    const fromDB = await prisma.eatery.findUnique({
       where: { id: eateryId },
       include: {
         events: {
@@ -97,11 +95,11 @@ export const getEateryById = async (eateryId: number) => {
       },
     });
 
-    if (!eatery) {
+    if (!fromDB) {
       throw new NotFoundError('Eatery not in DB');
     }
 
-    return eatery;
+    return fromDB;
   }
 };
 
