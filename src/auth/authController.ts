@@ -1,30 +1,63 @@
+import crypto from 'crypto';
+import jwt from 'jsonwebtoken';
+
 import type { Request, Response } from 'express';
 
 import { prisma } from '../prisma.js';
+import { ForbiddenError } from '../utils/AppError.js';
 
-export const authorizeDeviceId = async (req: Request, res: Response) => {
-  const { deviceId } = req.body;
+export const verifyDeviceUuid = async (req: Request, res: Response) => {
+  const { deviceUuid } = req.body;
+  const refreshToken = crypto.randomBytes(64).toString('hex');
 
   const user = await prisma.user.upsert({
-    where: { deviceId },
-    update: {},
-    create: {
-      deviceId,
+    where: { deviceUuid },
+    // If the user exists, update the refreshToken
+    update: {
+      refreshToken,
     },
-    select: {
-      id: true,
-      deviceId: true,
-      favoritedEateries: {
-        select: {
-          eateryId: true,
-        },
-      },
-      favoritedItemNames: true,
+    // If the user does not exist, create a new user
+    create: {
+      deviceUuid,
+      refreshToken,
     },
   });
 
+  const accessToken = jwt.sign(
+    { userId: user.id },
+    process.env.ACCESS_TOKEN_SECRET!,
+    { expiresIn: '15m' },
+  );
+
+  return res.json({ accessToken, refreshToken });
+};
+
+export const refreshAccessToken = async (req: Request, res: Response) => {
+  const { refreshToken } = req.body;
+
+  const user = await prisma.user.findFirst({
+    where: { refreshToken },
+  });
+
+  if (!user) {
+    throw new ForbiddenError('Invalid refresh token');
+  }
+
+  const newAccessToken = jwt.sign(
+    { userId: user.id },
+    process.env.ACCESS_TOKEN_SECRET!,
+    { expiresIn: '15m' },
+  );
+
+  const newRefreshToken = crypto.randomBytes(64).toString('hex');
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { refreshToken: newRefreshToken },
+  });
+
   return res.json({
-    ...user,
-    favoritedEateries: user.favoritedEateries.map((fe) => fe.eateryId),
+    accessToken: newAccessToken,
+    refreshToken: newRefreshToken,
   });
 };
