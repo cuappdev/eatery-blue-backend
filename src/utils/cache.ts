@@ -68,11 +68,11 @@ export function getEateriesEtag(): string {
 
 export async function refreshCacheFromDB() {
   clearAppCache();
-  
+
   // Temporarily suppress console logs for this query
   const originalLog = console.log;
   console.log = () => {};
-  
+
   const eateries = await prisma.eatery.findMany({
     include: {
       events: {
@@ -87,7 +87,6 @@ export async function refreshCacheFromDB() {
               },
             },
           },
-          userEventVotes: true,
         },
         orderBy: {
           startTimestamp: 'asc',
@@ -95,10 +94,10 @@ export async function refreshCacheFromDB() {
       },
     },
   });
-  
+
   // Restore console.log
   console.log = originalLog;
-  
+
   populateCache(eateries);
 }
 

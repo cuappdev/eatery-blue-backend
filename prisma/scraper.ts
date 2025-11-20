@@ -362,6 +362,27 @@ async function processAllEateries(
   });
 }
 
+async function getAllEateriesData() {
+  return await prisma.eatery.findMany({
+    include: {
+      events: {
+        include: {
+          menu: {
+            include: {
+              items: {
+                include: {
+                  dietaryPreferences: true,
+                  allergens: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+}
+
 export async function main() {
   const startTime = Date.now();
   console.log('Starting scraper at', new Date(startTime).toString(), '\n');
@@ -466,6 +487,48 @@ export async function main() {
     dbDuration = ((Date.now() - dbStartTime) / 1000).toFixed(2);
     console.error('✗ Error during database transaction:', error);
     throw error;
+  }
+
+  // Send newly populated data to server
+  console.log('[Scheduler] Scraper run finished\n');
+  try {
+    console.log('[Scheduler] Fetching all eatery data for server update...');
+    const startFetchTime = Date.now();
+    const allEateryData = await getAllEateriesData();
+    const fetchDuration = ((Date.now() - startFetchTime) / 1000).toFixed(2);
+    console.log(
+      `[Scheduler] Fetched ${allEateryData.length} eateries in ${fetchDuration}s`,
+    );
+
+    console.log('[Scheduler] Updating server cache with new eatery data...');
+    const startUpdateTime = Date.now();
+    const response = await fetch(
+      `${process.env.SERVER_URL}/internal/cache/`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          [process.env.CACHE_REFRESH_HEADER!]:
+            process.env.CACHE_REFRESH_SECRET!,
+        },
+        body: JSON.stringify({ eateries: allEateryData }),
+      },
+    );
+    if (!response.ok) {
+      throw new Error(
+        `Server responded with status ${response.status} during cache update`,
+      );
+    }
+    const updateDuration = ((Date.now() - startUpdateTime) / 1000).toFixed(2);
+    console.log(
+      `[Scheduler] Server cache updated successfully in ${updateDuration}s`,
+    );
+  }
+  catch (error) {
+    console.error(
+      '[Scheduler] Failed to update server cache with new eatery data:',
+      error,
+    );
   }
   
   const totalDuration = ((Date.now() - startTime) / 1000).toFixed(2);

@@ -22,7 +22,7 @@ app.set('trust proxy', 1);
 
 app.use(requestLogger);
 app.use(helmet());
-app.use(express.json({ limit: '10kb' }));
+app.use(express.json({ limit: '2mb' }));
 app.use(ipRateLimiter);
 
 const router = express.Router();
