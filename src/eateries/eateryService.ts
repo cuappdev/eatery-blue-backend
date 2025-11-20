@@ -62,7 +62,17 @@ export const getEateryById = async (eateryId: number) => {
     if (error instanceof NotFoundError) {
       throw error;
     }
+    refreshCacheFromDB();
+    const cachedEateries = getAllEateriesData();
+    const eatery = cachedEateries.find((e) => e.id === eateryId);
 
+    if (!eatery) {
+      throw new NotFoundError('Eatery not found');
+    }
+
+    return eatery;
+  } finally {
+    // As a last resort, fetch directly from the database
     const eatery = await prisma.eatery.findUnique({
       where: { id: eateryId },
       include: {
@@ -88,7 +98,7 @@ export const getEateryById = async (eateryId: number) => {
     });
 
     if (!eatery) {
-      throw new NotFoundError('Eatery not found');
+      throw new NotFoundError('Eatery not in DB');
     }
 
     return eatery;
