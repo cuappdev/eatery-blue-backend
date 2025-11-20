@@ -19,14 +19,14 @@ export const authorizeDeviceId = async (req: Request, res: Response) => {
   const { deviceId } = req.body;
 
   const user = await prisma.user.upsert({
-    where: { deviceId },
+    where: { deviceUuid },
     update: {},
     create: {
-      deviceId,
+      deviceUuid,
     },
     select: {
       id: true,
-      deviceId: true,
+      deviceUuid: true,
       favoritedEateries: {
         select: {
           eateryId: true,
