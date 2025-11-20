@@ -10,7 +10,7 @@ COPY package*.json ./
 # Install dependencies (including dev dependencies for build)
 RUN npm ci
 
-# Copy prisma schema
+# Copy prisma schema and TypeScript files
 COPY prisma ./prisma/
 
 # Generate Prisma client
@@ -20,7 +20,7 @@ RUN npx prisma generate
 COPY tsconfig.json ./
 COPY src ./src/
 
-# Build the TypeScript application
+# Build the TypeScript application (this will compile both src/ and prisma/)
 RUN npm run build
 
 # Production stage

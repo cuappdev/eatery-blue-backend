@@ -4,6 +4,7 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "lib": ["es2020"],
+    "rootDir": ".",
     "outDir": "./dist",
     "esModuleInterop": true,
     "resolveJsonModule": true,

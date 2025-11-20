@@ -3,8 +3,9 @@ version: '3.8'
 services:
   app:
     image: cornellappdev/eatery-blue-dev:${IMAGE_TAG}
-    volumes:
-      - ./firebase-service-account.json:/app/firebase-service-account.json:ro
+    configs:
+      - source: firebase_service_account
+        target: /app/firebase-service-account.json
     env_file: .env
     networks:
       - eatery-network
@@ -23,3 +24,7 @@ services:
 networks:
   eatery-network:
     driver: overlay
+
+configs:
+  firebase_service_account:
+    file: ./firebase-service.account.json
