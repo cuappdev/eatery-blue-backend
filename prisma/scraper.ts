@@ -1,5 +1,4 @@
 import { PrismaClient } from '@prisma/client';
-import dotenv from 'dotenv';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import cron from 'node-cron';
@@ -7,8 +6,6 @@ import type { RawScrapedData, RawEatery, RawStaticEatery, RawDiningItem } from '
 import { mapCampusArea, mapEateryType, mapPaymentMethod, mapEventType, mapImageUrl, createWeeklyDate } from './mappers.js';
 import type { CampusArea, PaymentMethod, EateryType } from '@prisma/client';
 import { DEFAULT_IMAGE_URL } from '../src/constants.js';
-
-dotenv.config();
 
 const prisma = new PrismaClient();
 
