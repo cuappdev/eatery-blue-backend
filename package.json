@@ -13,11 +13,7 @@
     "lint": "eslint '{src,test}/**/*.ts' --fix",
     "format": "prettier --write '{src,test}/**/*.ts'",
     "scrape": "tsx prisma/scraper.ts",
-<<<<<<< HEAD
-    "scrape:scheduled": "SCHEDULED_MODE=true node dist/prisma/scraper.js",
-=======
     "scrape:scheduled": "SCHEDULED_MODE=true tsx prisma/scraper.ts",
->>>>>>> 5487c7c (fix merge issues)
     "studio": "prisma studio",
     "send-notifications": "tsx prisma/send-notifications.ts",
     "test-noti-setup": "tsx src/utils/test-notification-setup.ts"

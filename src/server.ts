@@ -6,7 +6,6 @@ import type { Request, Response } from 'express';
 
 import authRouter from './auth/authRouter.js';
 import eateryRouter from './eateries/eateryRouter.js';
-import { eateryRouter } from './eateries/eateryRouter.js';
 import financialRouter from './financials/financialsRouter.js';
 import { requireAuth } from './middleware/authentication.js';
 import { globalErrorHandler } from './middleware/errorHandler.js';
