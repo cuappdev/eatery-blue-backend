@@ -5,11 +5,14 @@ import express from 'express';
 import type { Request, Response } from 'express';
 
 import authRouter from './auth/authRouter.js';
+import courseRouter from './courses/courseRouter.js';
+import financialsRouter from './financials/financialsRouter.js';
 import { requireAuth } from './middleware/authentication.js';
 import { globalErrorHandler } from './middleware/errorHandler.js';
 import { requestLogger } from './middleware/logger.js';
 import { ipRateLimiter } from './middleware/rateLimit.js';
 import { prisma } from './prisma.js';
+import userRouter from './user/userRouter.js';
 
 const app = express();
 
@@ -47,9 +50,12 @@ router.get('/health', async (_: Request, res: Response) => {
 
 // Public routes
 router.use('/auth', authRouter);
+router.use('/user', userRouter);
 
 // Protected routes (require GET authentication)
 router.use(requireAuth);
+router.use('/courses', courseRouter);
+router.use('/financials', financialsRouter);
 
 app.use(router);
 
@@ -69,8 +75,6 @@ const server = app.listen(port, async () => {
     console.error('Failed to connect to database:', error);
     process.exit(1);
   }
-
-  // TODO: Fetch and cache any necessary data on startup
 });
 
 // Graceful shutdown

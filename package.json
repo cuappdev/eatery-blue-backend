@@ -11,9 +11,9 @@
     "dev": "NODE_ENV=development nodemon -x tsx src/server.ts",
     "lint": "eslint '{src,test}/**/*.ts' --fix",
     "format": "prettier --write '{src,test}/**/*.ts'",
-    "scrape": "tsx prisma/scraper.ts",
-    "scrape:scheduled": "SCHEDULED_MODE=true tsx prisma/scraper.ts",
-    "studio": "prisma studio"
+    "seed": "tsx prisma/seed.ts",
+    "send-notifications": "tsx prisma/send-notifications.ts",
+    "test-noti-setup": "tsx src/utils/test-notification-setup.ts"
   },
   "repository": {
     "type": "git",
@@ -27,22 +27,22 @@
   },
   "homepage": "https://github.com/cuappdev/eatery-blue-backend#readme",
   "dependencies": {
-    "@prisma/client": "^6.16.2",
+    "@prisma/client": "^6.19.0",
+    "cookie-parser": "^1.4.7",
+    "date-fns": "^4.1.0",
+    "date-fns-tz": "^3.2.0",
     "dotenv": "^17.2.3",
-    "escape-html": "^1.0.3",
     "express": "^5.1.0",
     "express-rate-limit": "^8.1.0",
-    "firebase-admin": "^13.5.0",
+    "firebase-admin": "^13.6.0",
     "helmet": "^8.1.0",
     "node-cron": "^4.2.1",
-    "node-cache": "^5.1.2",
     "zod": "^4.1.12"
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",
     "@trivago/prettier-plugin-sort-imports": "^5.2.2",
     "@types/cookie-parser": "^1.4.9",
-    "@types/escape-html": "^1.0.4",
     "@types/express": "^5.0.3",
     "@types/node": "^24.5.2",
     "@types/node-cron": "^3.0.11",
@@ -53,8 +53,9 @@
     "globals": "^15.0.0",
     "nodemon": "^3.1.10",
     "prettier": "^3.6.2",
-    "prisma": "^6.16.2",
-    "tsx": "^4.20.5",
-    "typescript": "^5.9.2"
+    "prisma": "^6.19.0",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
   }
 }
