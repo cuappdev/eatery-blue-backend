@@ -50,7 +50,6 @@ router.use('/auth', authRouter);
 
 // Protected routes (require GET authentication)
 router.use(requireAuth);
-router.use('/courses', courseRouter);
 
 app.use(router);
 
