@@ -11,8 +11,25 @@ import { DEFAULT_IMAGE_URL } from '../src/constants.js';
 const prisma = new PrismaClient();
 
 async function getDiningData(): Promise<RawScrapedData> {
-  const diningData = await fetch(process.env.CORNELL_DINING_API_URL as string);
-  const data = await diningData.json() as RawScrapedData;
+  const apiUrl = process.env.CORNELL_DINING_API_URL;
+  if (!apiUrl) {
+    throw new Error('CORNELL_DINING_API_URL environment variable is not set');
+  }
+
+  const response = await fetch(apiUrl, {
+    signal: AbortSignal.timeout(30000), // 30 second timeout
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch dining data: HTTP ${response.status} ${response.statusText}`);
+  }
+
+  const data = await response.json() as RawScrapedData;
+  
+  if (!data?.data?.eateries) {
+    throw new Error('Invalid response format from Cornell Dining API');
+  }
+
   return data;
 }
 
@@ -25,7 +42,7 @@ function loadStaticEateries(): RawStaticEatery[] {
     const eateries = Array.isArray(data) ? data : (data.eateries || []);
     return eateries;
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+    if ((error as { code?: string }).code === 'ENOENT') {
       console.log('No static eateries file found, skipping...');
       return [];
     }
@@ -252,44 +269,41 @@ function transformEatery(rawEatery: RawEatery) {
 async function transformEateriesConcurrently(
   rawEateries: RawEatery[],
   concurrency: number = 5
-): Promise<Array<{ index: number; result: ReturnType<typeof transformEatery> }>> {
-  const results: Array<{ index: number; result: ReturnType<typeof transformEatery> }> = [];
-  const errors: Array<{ index: number; eatery: RawEatery; error: unknown }> = [];
-  
-  const queue: Array<{ index: number; eatery: RawEatery }> = rawEateries.map((eatery, index) => ({
-    index,
-    eatery,
-  }));
+): Promise<ReturnType<typeof transformEatery>[]> {
+  const results: ReturnType<typeof transformEatery>[] = [];
+  const errors: Array<{ eatery: RawEatery; error: unknown }> = [];
 
-  async function worker(workerId: number): Promise<void> {
-    while (true) {
-      await new Promise((resolve) => setImmediate(resolve));
-      
-      const item = queue.shift();
-      if (!item) break;
+  // Process in batches for better performance
+  for (let i = 0; i < rawEateries.length; i += concurrency) {
+    const batch = rawEateries.slice(i, i + concurrency);
+    const batchResults = await Promise.allSettled(
+      batch.map(async (rawEatery) => {
+        try {
+          const transformed = transformEatery(rawEatery);
+          console.log(`   ✓ Transformed ${rawEatery.name} (${transformed.events.length} events)`);
+          return transformed;
+        } catch (error) {
+          console.error(`   ✗ Error transforming ${rawEatery.name}:`, error);
+          throw error;
+        }
+      })
+    );
 
-      const { index, eatery: rawEatery } = item;
-
-      try {
-        const transformed = transformEatery(rawEatery);
-        results.push({ index, result: transformed });
-        console.log(`   [Worker ${workerId}] ✓ Transformed ${rawEatery.name} (${transformed.events.length} events)`);
-      } catch (error) {
-        errors.push({ index, eatery: rawEatery, error });
-        console.error(`   [Worker ${workerId}] ✗ Error transforming ${rawEatery.name}:`, error);
+    for (let j = 0; j < batchResults.length; j++) {
+      const result = batchResults[j];
+      if (result.status === 'fulfilled') {
+        results.push(result.value);
+      } else {
+        errors.push({ eatery: batch[j], error: result.reason });
       }
     }
   }
 
-  const workers = Array.from({ length: concurrency }, (_, i) => worker(i + 1));
-  await Promise.all(workers);
-
   if (errors.length > 0) {
-    const errorMessages = errors.map((e) => `Eatery "${e.eatery.name}" (index ${e.index}): ${e.error}`).join('\n');
+    const errorMessages = errors.map((e) => `Eatery "${e.eatery.name}": ${e.error}`).join('\n');
     throw new Error(`Failed to transform ${errors.length} eatery(ies):\n${errorMessages}`);
   }
 
-  results.sort((a, b) => a.index - b.index);
   return results;
 }
 
@@ -332,33 +346,45 @@ async function processAllEateries(
   }>
 ) {
   return await prisma.$transaction(async (tx) => {
+    // Clear existing data
     await tx.event.deleteMany({});
     await tx.eatery.deleteMany({});
 
-    for (const { eatery, events } of transformedEateries) {
-      await tx.eatery.create({
-        data: {
-          ...eatery,
-          events: {
-            create: events.map((rawEvent) => ({
-              type: mapEventType(rawEvent.type),
-              startTimestamp: rawEvent.startTimestamp,
-              endTimestamp: rawEvent.endTimestamp,
-              menu: {
-                create: rawEvent.menu.map((rawCategory) => ({
-                  name: rawCategory.category,
-                  items: {
-                    create: rawCategory.items.map((rawItem) => ({
-                      name: rawItem.item,
+    // Process eateries in smaller batches within the transaction
+    const BATCH_SIZE = 10;
+    for (let i = 0; i < transformedEateries.length; i += BATCH_SIZE) {
+      const batch = transformedEateries.slice(i, i + BATCH_SIZE);
+      
+      await Promise.all(
+        batch.map(({ eatery, events }) =>
+          tx.eatery.create({
+            data: {
+              ...eatery,
+              events: {
+                create: events.map((rawEvent) => ({
+                  type: mapEventType(rawEvent.type),
+                  startTimestamp: rawEvent.startTimestamp,
+                  endTimestamp: rawEvent.endTimestamp,
+                  menu: {
+                    create: rawEvent.menu.map((rawCategory) => ({
+                      name: rawCategory.category,
+                      items: {
+                        create: rawCategory.items.map((rawItem) => ({
+                          name: rawItem.item,
+                        })),
+                      },
                     })),
                   },
                 })),
               },
-            })),
-          },
-        },
-      });
+            },
+          })
+        )
+      );
     }
+  }, {
+    maxWait: 20000, // Wait up to 20 seconds to start the transaction
+    timeout: 60000, // Allow the transaction to run for up to 60 seconds
   });
 }
 
@@ -381,6 +407,50 @@ async function getAllEateriesData() {
       },
     },
   });
+}
+
+async function updateServerCache(): Promise<void> {
+  const serverUrl = process.env.SERVER_URL;
+  const cacheRefreshHeader = process.env.CACHE_REFRESH_HEADER;
+  const cacheRefreshSecret = process.env.CACHE_REFRESH_SECRET;
+
+  if (!serverUrl || !cacheRefreshHeader || !cacheRefreshSecret) {
+    console.log('⚠️  Server cache update skipped: Missing SERVER_URL, CACHE_REFRESH_HEADER, or CACHE_REFRESH_SECRET');
+    return;
+  }
+
+  try {
+    console.log('Fetching all eatery data for server update...');
+    const startFetchTime = Date.now();
+    const allEateryData = await getAllEateriesData();
+    const fetchDuration = ((Date.now() - startFetchTime) / 1000).toFixed(2);
+    console.log(`Fetched ${allEateryData.length} eateries in ${fetchDuration}s`);
+
+    console.log('Updating server cache with new eatery data...');
+    const startUpdateTime = Date.now();
+    const response = await fetch(`${serverUrl}/internal/cache/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        [cacheRefreshHeader]: cacheRefreshSecret,
+      },
+      body: JSON.stringify({ eateries: allEateryData }),
+      signal: AbortSignal.timeout(30000), // 30 second timeout
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => 'Unable to read error response');
+      throw new Error(
+        `Server responded with status ${response.status}: ${errorText}`,
+      );
+    }
+
+    const updateDuration = ((Date.now() - startUpdateTime) / 1000).toFixed(2);
+    console.log(`✓ Server cache updated successfully in ${updateDuration}s`);
+  } catch (error) {
+    console.error('✗ Failed to update server cache with new eatery data:', error);
+    // Don't throw - this is not critical enough to fail the entire scraper
+  }
 }
 
 export async function main() {
@@ -440,9 +510,9 @@ export async function main() {
   console.log(`Found ${diningData.data.eateries.length} eateries from API (${apiFetchDuration}s)`);
 
   const transformStartTime = Date.now();
-  console.log(`Transforming API eatery data with ${process.env.WORKERS} concurrent workers...`);
-  const transformResults = await transformEateriesConcurrently(diningData.data.eateries, parseInt(process.env.WORKERS || '4', 10));
-  const transformedApiEateries = transformResults.map((r) => r.result);
+  const workerCount = parseInt(process.env.WORKERS || '4', 10);
+  console.log(`Transforming API eatery data with ${workerCount} concurrent workers...`);
+  const transformedApiEateries = await transformEateriesConcurrently(diningData.data.eateries, workerCount);
   const transformDuration = ((Date.now() - transformStartTime) / 1000).toFixed(2);
   console.log(`✓ Successfully transformed ${transformedApiEateries.length} API eateries (${transformDuration}s)\n`);
 
@@ -490,46 +560,8 @@ export async function main() {
   }
 
   // Send newly populated data to server
-  console.log('[Scheduler] Scraper run finished\n');
-  try {
-    console.log('[Scheduler] Fetching all eatery data for server update...');
-    const startFetchTime = Date.now();
-    const allEateryData = await getAllEateriesData();
-    const fetchDuration = ((Date.now() - startFetchTime) / 1000).toFixed(2);
-    console.log(
-      `[Scheduler] Fetched ${allEateryData.length} eateries in ${fetchDuration}s`,
-    );
-
-    console.log('[Scheduler] Updating server cache with new eatery data...');
-    const startUpdateTime = Date.now();
-    const response = await fetch(
-      `${process.env.SERVER_URL}/internal/cache/`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          [process.env.CACHE_REFRESH_HEADER!]:
-            process.env.CACHE_REFRESH_SECRET!,
-        },
-        body: JSON.stringify({ eateries: allEateryData }),
-      },
-    );
-    if (!response.ok) {
-      throw new Error(
-        `Server responded with status ${response.status} during cache update`,
-      );
-    }
-    const updateDuration = ((Date.now() - startUpdateTime) / 1000).toFixed(2);
-    console.log(
-      `[Scheduler] Server cache updated successfully in ${updateDuration}s`,
-    );
-  }
-  catch (error) {
-    console.error(
-      '[Scheduler] Failed to update server cache with new eatery data:',
-      error,
-    );
-  }
+  console.log('\nScraper run finished\n');
+  await updateServerCache();
   
   const totalDuration = ((Date.now() - startTime) / 1000).toFixed(2);
   console.log(`\n✅ Dining data scraped successfully in ${totalDuration}s`);
@@ -584,8 +616,19 @@ function startScraperScheduler() {
 }
 
 if (process.env.SCHEDULED_MODE === 'true') {
+  console.log('[Scheduler] Running initial scraper on startup...');
+  
+  // Run scraper immediately on startup
+  runScraperSafely().then(() => {
+    console.log('[Scheduler] Initial scraper run completed');
+  }).catch((error) => {
+    console.error('[Scheduler] Initial scraper run failed:', error);
+  });
+  
+  // Start the scheduler for future runs
   startScraperScheduler();
   console.log('[Scheduler] Scraper scheduler is running. Press Ctrl+C to stop.');
+  
   const gracefulShutdown = async () => {
     console.log('[Scheduler] Shutting down gracefully...');
     await prisma.$disconnect();

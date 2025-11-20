@@ -6,7 +6,8 @@
   "main": "dist/src/server.js",
   "scripts": {
     "build": "tsc",
-    "start": "NODE_ENV=production node dist/src/server.js",
+    "start": "node dist/src/server.js",
+    "start:prod": "NODE_ENV=production node dist/src/server.js",
     "start:dev": "NODE_ENV=development node dist/src/server.js",
     "dev": "NODE_ENV=development nodemon -x tsx src/server.ts",
     "lint": "eslint '{src,test}/**/*.ts' --fix",
