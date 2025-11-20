@@ -1,7 +1,8 @@
 export const EATERY_IMAGES_BASE_URL =
   'https://appdev-upload.nyc3.digitaloceanspaces.com/eatery-images/';
 
-export const DEFAULT_IMAGE_URL = 'https://images-prod.healthline.com/hlcmsresource/images/AN_images/health-benefits-of-apples-1296x728-feature.jpg';
+export const DEFAULT_IMAGE_URL =
+  'https://images-prod.healthline.com/hlcmsresource/images/AN_images/health-benefits-of-apples-1296x728-feature.jpg';
 
 export enum Weekday {
   SUNDAY = 'Sunday',
