@@ -4,13 +4,14 @@ import express from 'express';
 import type { Request, Response } from 'express';
 
 import authRouter from './auth/authRouter.js';
-import { eateryRouter } from './eateries/eateryRouter.js';
+import eateryRouter from './eateries/eateryRouter.js';
 import { requireAuth } from './middleware/authentication.js';
 import { globalErrorHandler } from './middleware/errorHandler.js';
 import { requestLogger } from './middleware/logger.js';
 import { ipRateLimiter } from './middleware/rateLimit.js';
 import { prisma } from './prisma.js';
 import userRouter from './users/userRouter.js';
+import { cacheRouter } from './utils/cache.js';
 import { refreshCacheFromDB } from './utils/cache.js';
 
 const app = express();
@@ -49,6 +50,7 @@ router.get('/health', async (_: Request, res: Response) => {
 
 // Public routes
 router.use('/auth', authRouter);
+router.use('/internal/cache', cacheRouter);
 router.use('/eateries', eateryRouter);
 
 // Protected routes

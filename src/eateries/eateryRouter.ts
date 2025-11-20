@@ -4,7 +4,9 @@ import { validateRequest } from '../middleware/validateRequest.js';
 import { getAllEateriesSchema } from './eateries.schema.js';
 import { getAllEateries, getEateryById } from './eateryController.js';
 
-export const eateryRouter = Router();
+const router = Router();
 
-eateryRouter.get('/', validateRequest(getAllEateriesSchema), getAllEateries);
-eateryRouter.get('/:eateryId', getEateryById);
+router.get('/', validateRequest(getAllEateriesSchema), getAllEateries);
+router.get('/:eateryId', getEateryById);
+
+export default router;

@@ -9,11 +9,9 @@ const generateRefreshToken = (): string => {
 };
 
 const generateAccessToken = (userId: number): string => {
-  return jwt.sign(
-    { userId },
-    process.env.ACCESS_TOKEN_SECRET!,
-    { expiresIn: '15m' },
-  );
+  return jwt.sign({ userId }, process.env.ACCESS_TOKEN_SECRET!, {
+    expiresIn: '15m',
+  });
 };
 
 export const verifyDeviceUuid = async (deviceUuid: string) => {
