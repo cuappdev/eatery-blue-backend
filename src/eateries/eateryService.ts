@@ -2,7 +2,8 @@ import type { Event } from '@prisma/client';
 
 import { prisma } from '../prisma.js';
 import { NotFoundError } from '../utils/AppError.js';
-import { getAllEateriesData } from '../utils/cache.js';
+import { getAllEateriesData, refreshCacheFromDB } from '../utils/cache.js';
+import type { EateryWithEvents } from '../utils/cache.js';
 
 export const getAllEateries = async (days: number = 0) => {
   // Calculate date range for filtering events
@@ -22,36 +23,26 @@ export const getAllEateries = async (days: number = 0) => {
     const cachedEateries = getAllEateriesData();
 
     // Filter events to only include those on the specified day
-    const filteredEateries = cachedEateries.map((eatery) => ({
-      ...eatery,
-      events: eatery.events.filter((event: Event) => {
-        const eventStart = new Date(event.startTimestamp);
-        const eventEnd = new Date(event.endTimestamp);
-
-        // Include event if it overlaps with the target day
-        return eventStart <= endOfDay && eventEnd >= startOfDay;
-      }),
-    }));
+    const filteredEateries = filterEateries(
+      cachedEateries,
+      startOfDay,
+      endOfDay,
+    );
 
     return filteredEateries;
   } catch {
     // If cache is cold (should never happen), fall back to database
-    const eateries = await prisma.eatery.findMany({
-      include: {
-        events: {
-          where: {
-            startTimestamp: {
-              lte: endOfDay,
-            },
-            endTimestamp: {
-              gte: startOfDay,
-            },
-          },
-        },
-      },
-    });
+    refreshCacheFromDB();
+    const cachedEateries = getAllEateriesData();
 
-    return eateries;
+    // Filter events to only include those on the specified day
+    const filteredEateries = filterEateries(
+      cachedEateries,
+      startOfDay,
+      endOfDay,
+    );
+
+    return filteredEateries;
   }
 };
 
@@ -71,8 +62,16 @@ export const getEateryById = async (eateryId: number) => {
     if (error instanceof NotFoundError) {
       throw error;
     }
+    refreshCacheFromDB();
+    const cachedEateries = getAllEateriesData();
+    const eatery = cachedEateries.find((e) => e.id === eateryId);
 
-    const eatery = await prisma.eatery.findUnique({
+    if (eatery) {
+      return eatery;
+    }
+
+    // As a last resort, fetch directly from the database
+    const fromDB = await prisma.eatery.findUnique({
       where: { id: eateryId },
       include: {
         events: {
@@ -96,10 +95,28 @@ export const getEateryById = async (eateryId: number) => {
       },
     });
 
-    if (!eatery) {
-      throw new NotFoundError('Eatery not found');
+    if (!fromDB) {
+      throw new NotFoundError('Eatery not in DB');
     }
 
-    return eatery;
+    return fromDB;
   }
 };
+
+function filterEateries(
+  cachedEateries: EateryWithEvents[],
+  startOfDay: Date,
+  endOfDay: Date,
+) {
+  const filteredEateries = cachedEateries.map((eatery) => ({
+    ...eatery,
+    events: eatery.events.filter((event: Event) => {
+      const eventStart = new Date(event.startTimestamp);
+      const eventEnd = new Date(event.endTimestamp);
+
+      // Include event if it overlaps with the target day
+      return eventStart <= endOfDay && eventEnd >= startOfDay;
+    }),
+  }));
+  return filteredEateries;
+}

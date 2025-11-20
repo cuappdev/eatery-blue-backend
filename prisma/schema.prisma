@@ -8,33 +8,43 @@ datasource db {
 }
 
 enum CampusArea {
+  EAST
   WEST
   NORTH
   CENTRAL
   COLLEGETOWN
+  SOUTH
   NONE
 }
 
-enum PaymentMethods {
+enum PaymentMethod {
   MEAL_SWIPE
   CASH
   CARD
   BRB
+  FREE
 }
 
 enum EateryType {
   DINING_ROOM
   CAFE
   COFFEE_SHOP
+  FOOD_COURT
+  CONVENIENCE_STORE
+  CART
+  GENERAL
 }
 
 enum EventType {
+  AVAILABLE_ALL_DAY
   BREAKFAST
   BRUNCH
-  LUNCH
   DINNER
-  GENERAL
-  CAFE // Used for dummy event for Cafe eateries (ones with no menus)
+  EMPTY
+  LATE_LUNCH
+  LUNCH
+  OPEN
+  GENERAL // Used for dummy event for Cafe eateries (ones with no menus)
   PANTS // Pants
 }
 
@@ -88,12 +98,13 @@ model Report {
 }
 
 model Eatery {
-  id             Int              @id @default(autoincrement())
-  cornellId      Int?             @unique
+  id             Int             @id @default(autoincrement())
+  cornellId      Int?            @unique
   announcements  String[]
   name           String
   shortName      String
   about          String
+  shortAbout     String
   cornellDining  Boolean
   menuSummary    String
   imageUrl       String
@@ -104,9 +115,9 @@ model Eatery {
   latitude       Float
   longitude      Float
   location       String
-  paymentMethods PaymentMethods[]
-  eateryType     EateryType
-  createdAt      DateTime         @default(now())
+  paymentMethods PaymentMethod[]
+  eateryTypes    EateryType[]
+  createdAt      DateTime        @default(now())
 
   events            Event[]
   favoritedEateries FavoritedEatery[]
