@@ -1,7 +1,19 @@
 import type { NextFunction, Request, Response } from 'express';
-
-import { prisma } from '../prisma.js';
+import * as authService from '../auth/authService.js';
 import { cbordService } from '../services/cbord.service.js';
+import { prisma } from '../prisma.js';
+
+export const verifyDeviceUuid = async (req: Request, res: Response) => {
+  const { deviceUuid } = req.body;
+  const tokens = await authService.verifyDeviceUuid(deviceUuid);
+  return res.json(tokens);
+};
+
+export const refreshAccessToken = async (req: Request, res: Response) => {
+  const { refreshToken } = req.body;
+  const tokens = await authService.refreshAccessToken(refreshToken);
+  return res.json(tokens);
+};
 
 export const authorizeDeviceId = async (req: Request, res: Response) => {
   const { deviceId } = req.body;
@@ -39,10 +51,10 @@ export const getAuthorize = async (
   res: Response,
   next: NextFunction,
 ) => {
-  const { deviceId, pin, session_id } = req.body;
+  const { deviceId, pin, sessionId } = req.body;
 
   try {
-    await cbordService.createPin(deviceId, pin, session_id);
+    await cbordService.createPin(deviceId, pin, sessionId);
 
     // This route does NOT create the user, client should call /auth/register first.
     // We just link the PIN.
