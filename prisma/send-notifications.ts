@@ -1,5 +1,6 @@
 import { firebaseService, prisma } from '../src/firebase.js';
 import { getQueryTimeWindow } from '../src/utils/time.js';
+import cron from 'node-cron';
 
 function buildMessage(
   matchesByEatery: Map<string, string[]>,
@@ -48,7 +49,7 @@ async function cleanupFailedTokens(tokens: string[]) {
   }
 }
 
-async function main() {
+export async function main() {
   const { windowStartUnix, windowEndUnix } = getQueryTimeWindow();
 
   // build a map of { eateryName: Set<itemName> }
@@ -145,12 +146,61 @@ async function main() {
   }
 }
 
-main()
-  .then(async () => {
-    await prisma.$disconnect();
-  })
-  .catch(async (e) => {
-    console.error('Notification job failed:', e);
-    await prisma.$disconnect();
-    process.exit(1);
+let isRunning = false;
+
+async function runNotificationsSafely() {
+  if (isRunning) {
+    console.log('[Notifications] Job is already running, skipping.');
+    return;
+  }
+
+  isRunning = true;
+  console.log(`[Notifications] Starting run at ${new Date().toISOString()}`);
+
+  try {
+    await main();
+    console.log('[Notifications] Completed successfully.');
+  } catch (error) {
+    console.error('[Notifications] Failed:', error);
+  } finally {
+    isRunning = false;
+  }
+}
+
+export function startNotificationScheduler() {
+  const cronExpression = process.env.NOTI_CRON_SCHEDULE || '0 8,17 * * *';
+
+  console.log('[Notifications] Initializing scheduler...');
+  console.log(`[Notifications] Schedule: ${cronExpression}`);
+
+  const task = cron.schedule(cronExpression, runNotificationsSafely, {
+    timezone: 'America/New_York',
   });
+
+  console.log('[Notifications] Scheduler started.');
+
+  return task;
+}
+
+
+if (process.env.SCHEDULED_MODE === 'true') {
+  startNotificationScheduler();
+  console.log('[Notifications] Notification scheduler is running. Press Ctrl+C to stop.');
+  const gracefulShutdown = async () => {
+    console.log('[Notifications] Shutting down gracefully...');
+    await prisma.$disconnect();
+    process.exit(0);
+  };
+  
+  process.on('SIGTERM', gracefulShutdown);
+  process.on('SIGINT', gracefulShutdown);
+} else {
+  main()
+    .catch((e) => {
+      console.error('Error during scraping:', e);
+      process.exit(1);
+    })
+    .finally(async () => {
+      await prisma.$disconnect();
+    });
+}
