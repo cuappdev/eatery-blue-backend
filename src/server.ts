@@ -1,4 +1,3 @@
-import 'dotenv/config';
 import helmet from 'helmet';
 
 import express from 'express';
@@ -70,14 +69,13 @@ const server = app.listen(port, async () => {
   try {
     await prisma.$connect();
     console.log('Database connected successfully');
-    await refreshCacheFromDB();
-    console.log('Cache initialized from database');
   } catch (error) {
     console.error('Failed to connect to database:', error);
     process.exit(1);
   }
 
-  // TODO: Fetch and cache any necessary data on startup
+  // Initial cache refresh
+  await refreshCacheFromDB();
 });
 
 // Graceful shutdown
