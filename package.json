@@ -12,7 +12,7 @@
     "lint": "eslint '{src,test}/**/*.ts' --fix",
     "format": "prettier --write '{src,test}/**/*.ts'",
     "scrape": "tsx prisma/scraper.ts",
-    "scrape:scheduled": "SCHEDULED_MODE=true tsx prisma/scraper.ts",
+    "scrape:scheduled": "SCHEDULED_MODE=true node dist/prisma/scraper.js",
     "studio": "prisma studio"
   },
   "repository": {

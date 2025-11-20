@@ -1,6 +1,8 @@
+version: '3.8'
+
 services:
   app:
-    image: cornellappdev/eatery-blue:${IMAGE_TAG}
+    image: cornellappdev/eatery-blue-dev:${IMAGE_TAG}
     volumes:
       - ./firebase-service-account.json:/app/firebase-service-account.json:ro
     env_file: .env
@@ -12,7 +14,7 @@ services:
       - scraper
 
   scraper:
-    image: cornellappdev/eatery-blue:${IMAGE_TAG}
+    image: cornellappdev/eatery-blue-dev:${IMAGE_TAG}
     env_file: .env
     networks:
       - eatery-network
@@ -20,4 +22,4 @@ services:
 
 networks:
   eatery-network:
-    driver: bridge
+    driver: overlay
