@@ -69,6 +69,8 @@ const server = app.listen(port, async () => {
     console.error('Failed to connect to database:', error);
     process.exit(1);
   }
+
+  // TODO: Fetch and cache any necessary data on startup
 });
 
 // Graceful shutdown
