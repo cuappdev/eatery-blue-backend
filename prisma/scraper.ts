@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import cron from 'node-cron';
-import type { RawScrapedData, RawEatery, RawStaticEatery } from './scraperTypes.js';
+import type { RawScrapedData, RawEatery, RawStaticEatery, RawDiningItem } from './scraperTypes.js';
 import { mapCampusArea, mapEateryType, mapPaymentMethod, mapEventType, mapImageUrl, createWeeklyDate } from './mappers.js';
 import type { CampusArea, PaymentMethod, EateryType } from '@prisma/client';
 import { DEFAULT_IMAGE_URL } from '../src/constants.js';
@@ -32,6 +32,79 @@ function loadStaticEateries(): RawStaticEatery[] {
       return [];
     }
     throw error;
+  }
+}
+
+async function fetchFreedgeDiningItems(): Promise<RawDiningItem[]> {
+  const GOOGLE_SHEETS_API_KEY = process.env.GOOGLE_SHEETS_API_KEY;
+  const FREEDGE_SHEET_ID = process.env.FREEDGE_SHEET_ID;
+  const FREEDGE_APPROVED_EMAILS = process.env.FREEDGE_APPROVED_EMAILS;
+
+  if (!GOOGLE_SHEETS_API_KEY) {
+    console.log('GOOGLE_SHEETS_API_KEY not set, skipping freedge update');
+    return [];
+  }
+  if (!FREEDGE_SHEET_ID) {
+    console.log('FREEDGE_SHEET_ID not set, skipping freedge update');
+    return [];
+  }
+  if (!FREEDGE_APPROVED_EMAILS) {
+    console.log('FREEDGE_APPROVED_EMAILS not set, skipping freedge update');
+    return [];
+  }
+
+  const approvedEmails = FREEDGE_APPROVED_EMAILS.split(',').map((email) => email.trim());
+
+  try {
+    const response = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${FREEDGE_SHEET_ID}/values/A2:M?key=${GOOGLE_SHEETS_API_KEY}`,
+      { signal: AbortSignal.timeout(10000) }
+    );
+
+    if (response.status > 400) {
+      console.log(`Failed to fetch freedge data: HTTP ${response.status}`);
+      return [];
+    }
+
+    const data = await response.json() as { values?: string[][] };
+
+    if (!data.values) {
+      console.log('No values in response, cannot update freedge external eatery');
+      console.log(data);
+      return [];
+    }
+
+    const freedgeItems: RawDiningItem[] = [];
+    
+    console.log(`   Found ${data.values.length} rows in Google Sheets`);
+
+    for (const item of data.values) {
+      if (item.length < 5) {
+        continue;
+      }
+      const email = item[1]?.trim();
+      const itemName = item[4]?.trim();
+      if (!email || !itemName) {
+        continue;
+      }
+      if (!approvedEmails.includes(email)) {
+        continue;
+      }
+      if (item.length > 11 && item[11] !== 'Yes') {
+        continue;
+      }
+      freedgeItems.push({
+        descr: itemName,
+        category: 'Free Food',
+        item: itemName,
+        healthy: false,
+        showCategory: true,
+      });
+    }
+    return freedgeItems;
+  } catch (error) {
+    console.error('Error fetching freedge data:', error);
+    return [];
   }
 }
 
@@ -299,6 +372,26 @@ export async function main() {
   const staticStartTime = Date.now();
   console.log('Loading static eateries at', new Date(staticStartTime).toString());
   const staticEateries = loadStaticEateries();
+  
+  // Update freedge eatery with data from Google Sheets
+  const freedgeStartTime = Date.now();
+  console.log('Fetching freedge dining items from Google Sheets...');
+  const freedgeDiningItems = await fetchFreedgeDiningItems();
+  const freedgeEatery = staticEateries.find((eatery) => eatery.id === -46);
+  if (freedgeEatery) {
+    if (freedgeDiningItems.length > 0) {
+      freedgeEatery.diningItems = freedgeDiningItems;
+      console.log(`✓ Updated freedge with ${freedgeDiningItems.length} dining items`);
+    } else {
+      console.log('⚠️  No freedge items found or freedge update skipped');
+      console.log('   (Check that GOOGLE_SHEETS_API_KEY, FREEDGE_SHEET_ID, and FREEDGE_APPROVED_EMAILS are set correctly)');
+    }
+  } else {
+    console.log('⚠️  Freedge eatery not found in static eateries (looking for id: -46)');
+  }
+  const freedgeDuration = ((Date.now() - freedgeStartTime) / 1000).toFixed(2);
+  console.log(`Freedge update completed (${freedgeDuration}s)\n`);
+  
   const transformedStaticEateries: ReturnType<typeof transformStaticEatery>[] = [];
   const skippedStaticEateries: Array<{ name: string; error: string }> = [];
   
@@ -380,6 +473,7 @@ export async function main() {
   const totalDuration = ((Date.now() - startTime) / 1000).toFixed(2);
   console.log(`\n✅ Dining data scraped successfully in ${totalDuration}s`);
   console.log(`   - Static eateries: ${staticDuration}s`);
+  console.log(`   - Freedge update: ${freedgeDuration}s`);
   console.log(`   - API fetch: ${apiFetchDuration}s`);
   console.log(`   - API transformation: ${transformDuration}s`);
   console.log(`   - Database insertion: ${dbDuration}s`);
