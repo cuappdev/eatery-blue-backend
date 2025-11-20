@@ -14,20 +14,48 @@ async function getCachedEateries(): Promise<EateryWithEvents[]> {
   }
 }
 
-export const getAllEateries = async (days: number = 0) => {
+export const getAllEateries = async (days?: number) => {
   const cachedEateries = await getCachedEateries();
 
-  // Calculate date range for filtering events
-  // days=0 means today, days=1 means tomorrow, etc.
+  // If no days parameter provided, return all eateries with all events
+  if (days === undefined) {
+    return cachedEateries;
+  }
+
+  // Calculate date range for filtering events using UTC to match event timestamps
+  // days=0 means today, days=1 means tomorrow, days=2 means day after tomorrow, etc.
   const now = new Date();
-  const targetDay = new Date(now);
-  targetDay.setDate(now.getDate() + days);
 
-  const startOfDay = new Date(targetDay);
-  startOfDay.setHours(0, 0, 0, 0);
+  // Add days by adding milliseconds (avoids timezone issues)
+  const msPerDay = 24 * 60 * 60 * 1000;
+  const targetTimestamp = now.getTime() + days * msPerDay;
+  const targetDate = new Date(targetTimestamp);
 
-  const endOfDay = new Date(targetDay);
-  endOfDay.setHours(23, 59, 59, 999);
+  // Set to start of day in UTC
+  const startOfDay = new Date(
+    Date.UTC(
+      targetDate.getUTCFullYear(),
+      targetDate.getUTCMonth(),
+      targetDate.getUTCDate(),
+      0,
+      0,
+      0,
+      0,
+    ),
+  );
+
+  // Set to end of day in UTC
+  const endOfDay = new Date(
+    Date.UTC(
+      targetDate.getUTCFullYear(),
+      targetDate.getUTCMonth(),
+      targetDate.getUTCDate(),
+      23,
+      59,
+      59,
+      999,
+    ),
+  );
 
   // Filter events to only include those on the specified day
   const filteredEateries = cachedEateries.map((eatery) => ({
