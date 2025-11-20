@@ -1,0 +1,23 @@
+services:
+  app:
+    image: cornellappdev/eatery-blue:${IMAGE_TAG}
+    volumes:
+      - ./firebase-service-account.json:/app/firebase-service-account.json:ro
+    env_file: .env
+    networks:
+      - eatery-network
+    ports:
+      - "80:8000"
+    depends_on:
+      - scraper
+
+  scraper:
+    image: cornellappdev/eatery-blue:${IMAGE_TAG}
+    env_file: .env
+    networks:
+      - eatery-network
+    command: ["sh", "-c", "npx prisma migrate deploy && npm run scrape:scheduled"]
+
+networks:
+  eatery-network:
+    driver: bridge
