@@ -14,7 +14,6 @@ import { prisma } from './prisma.js';
 import userRouter from './users/userRouter.js';
 import { cacheRouter } from './utils/cache.js';
 import { refreshCacheFromDB } from './utils/cache.js';
-import userRouter from './user/userRouter.js';
 
 const app = express();
 
@@ -54,7 +53,6 @@ router.get('/health', async (_: Request, res: Response) => {
 router.use('/auth', authRouter);
 router.use('/internal/cache', cacheRouter);
 router.use('/eateries', eateryRouter);
-router.use('/user', userRouter);
 
 // Protected routes
 router.use(requireAuth);
