@@ -11,6 +11,7 @@ import { globalErrorHandler } from './middleware/errorHandler.js';
 import { requestLogger } from './middleware/logger.js';
 import { ipRateLimiter } from './middleware/rateLimit.js';
 import { prisma } from './prisma.js';
+import userRouter from './users/userRouter.js';
 
 const app = express();
 
@@ -52,7 +53,7 @@ router.use('/eateries', eateryRouter);
 
 // Protected routes
 router.use(requireAuth);
-// TODO: Add protected routes here (like favoriting items, etc.)
+router.use('/users', userRouter);
 
 app.use(router);
 
