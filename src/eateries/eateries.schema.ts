@@ -7,4 +7,5 @@ export const getAllEateriesSchema = z.object({
 });
 
 // Schema for validating cached eatery data
-export const EaterySchema = z.array(z.any()); // This will be validated by the scraper that sends the data
+// This will be validated by the scraper that sends the data, max 500 eateries for safety
+export const EaterySchema = z.array(z.any()).max(500);
