@@ -10,6 +10,7 @@ import { globalErrorHandler } from './middleware/errorHandler.js';
 import { requestLogger } from './middleware/logger.js';
 import { ipRateLimiter } from './middleware/rateLimit.js';
 import { prisma } from './prisma.js';
+import { refreshCacheFromDB } from './utils/cache.js';
 
 const app = express();
 
@@ -65,6 +66,8 @@ const server = app.listen(port, async () => {
   try {
     await prisma.$connect();
     console.log('Database connected successfully');
+    await refreshCacheFromDB();
+    console.log('Cache initialized from database');
   } catch (error) {
     console.error('Failed to connect to database:', error);
     process.exit(1);
