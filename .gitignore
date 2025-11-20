@@ -55,6 +55,7 @@ lerna-debug.log*
 .env.local
 .env.*.local
 !.env.example
+*.pem
 
 # Firebase service account (sensitive)
 firebase-service-account.json
