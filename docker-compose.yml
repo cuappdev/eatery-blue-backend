@@ -27,4 +27,4 @@ networks:
 
 configs:
   firebase_service_account:
-    file: ./firebase-service.account.json
+    file: ./firebase-service-account.json
