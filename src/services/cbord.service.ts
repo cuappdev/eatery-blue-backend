@@ -17,7 +17,7 @@ const CBORD_COMMERCE_URL = `${CBORD_BASE_URL}/commerce`;
 interface CbordResponse<T> {
   response: T | null;
   exception: {
-    message: string;
+    message?: string;
   } | null;
 }
 
@@ -90,7 +90,7 @@ async function cbordRequest<T>(
  */
 function handleCbordException<T>(result: CbordResponse<T>): void {
   if (result.exception) {
-    const msg = result.exception.message;
+    const msg = result.exception.message ?? 'Unknown CBORD error';
     // "Session not found" or "not validated" are 401
     if (msg.includes('not validated') || msg.includes('Session not found')) {
       throw new UnauthorizedError(msg);

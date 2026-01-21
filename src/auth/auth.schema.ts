@@ -12,15 +12,21 @@ export const refreshAccessTokenSchema = z.object({
   }),
 });
 
-export const getAuthorizeSchema = z.object({
+export const linkCbordAccountSchema = z.object({
   body: z.object({
-    pin: z.string().nonempty('PIN is required'),
+    pin: z
+      .string()
+      .nonempty('PIN is required')
+      .regex(/^\d+$/, 'PIN must contain only numeric characters'),
     sessionId: z.string().nonempty('Session ID is required'),
   }),
 });
 
-export const getRefreshSchema = z.object({
+export const getCbordSessionSchema = z.object({
   body: z.object({
-    pin: z.string().nonempty('PIN is required'),
+    pin: z
+      .string()
+      .nonempty('PIN is required')
+      .regex(/^\d+$/, 'PIN must contain only numeric characters'),
   }),
 });

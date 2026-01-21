@@ -1,5 +1,7 @@
 import { addHours, endOfDay, getUnixTime, startOfDay } from 'date-fns';
 
+import { NOTIFICATION_LOOKAHEAD_HOURS } from '../constants.js';
+
 /**
  * Gets the start and end of the current day in a specific timezone.
  */
@@ -18,12 +20,9 @@ export function getQueryTimeWindow(): {
 } {
   const timeZone = 'America/New_York';
 
-  // How many hours ahead to look for events
-  const LOOKAHEAD_HOURS = 7;
-
   const zonedNow = new Date(new Date().toLocaleString('en-US', { timeZone }));
   const start = zonedNow;
-  const end = addHours(start, LOOKAHEAD_HOURS);
+  const end = addHours(start, NOTIFICATION_LOOKAHEAD_HOURS);
 
   return {
     windowStartUnix: getUnixTime(start),

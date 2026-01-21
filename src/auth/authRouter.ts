@@ -3,14 +3,14 @@ import { Router } from 'express';
 import { requireAuth } from '../middleware/authentication.js';
 import { validateRequest } from '../middleware/validateRequest.js';
 import {
-  getAuthorizeSchema,
-  getRefreshSchema,
+  getCbordSessionSchema,
+  linkCbordAccountSchema,
   refreshAccessTokenSchema,
   verifyDeviceUuidSchema,
 } from './auth.schema.js';
 import {
-  getAuthorize,
-  getRefresh,
+  getCbordSession,
+  linkCbordAccount,
   refreshAccessToken,
   verifyDeviceUuid,
 } from './authController.js';
@@ -30,14 +30,14 @@ router.post(
 router.post(
   '/get/authorize',
   requireAuth,
-  validateRequest(getAuthorizeSchema),
-  getAuthorize,
+  validateRequest(linkCbordAccountSchema),
+  linkCbordAccount,
 );
 router.post(
   '/get/refresh',
   requireAuth,
-  validateRequest(getRefreshSchema),
-  getRefresh,
+  validateRequest(getCbordSessionSchema),
+  getCbordSession,
 );
 
 export default router;

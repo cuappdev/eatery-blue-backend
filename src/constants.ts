@@ -4,6 +4,9 @@ export const EATERY_IMAGES_BASE_URL =
 export const DEFAULT_IMAGE_URL =
   'https://images-prod.healthline.com/hlcmsresource/images/AN_images/health-benefits-of-apples-1296x728-feature.jpg';
 
+/** How many hours ahead to look for events when sending notifications */
+export const NOTIFICATION_LOOKAHEAD_HOURS = 7;
+
 export enum Weekday {
   SUNDAY = 'Sunday',
   MONDAY = 'Monday',

@@ -1,4 +1,4 @@
-import type { NextFunction, Request, Response } from 'express';
+import type { Request, Response } from 'express';
 
 import { cbordService } from '../services/cbord.service.js';
 import * as authService from './authService.js';
@@ -19,46 +19,25 @@ export const refreshAccessToken = async (req: Request, res: Response) => {
  * @desc Links a GET/CBORD account to a deviceId via a PIN.
  * This is the one-time setup for the finance feature.
  */
-export const getAuthorize = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
+export const linkCbordAccount = async (req: Request, res: Response) => {
   const { userId } = req.user!;
   const { pin, sessionId } = req.body;
 
-  try {
-    await cbordService.createPin(String(userId), pin, sessionId);
+  await cbordService.createPin(String(userId), pin, sessionId);
 
-    // This route does NOT create the user, just links the PIN.
-    return res
-      .status(200)
-      .json({ message: 'GET account linked successfully.' });
-  } catch (error) {
-    return next(error);
-  }
+  // This route does NOT create the user, just links the PIN.
+  return res.json({ message: 'GET account linked successfully.' });
 };
 
 /**
  * @desc Exchanges a deviceId and PIN for a new GET/CBORD session_id.
  * This is the "persistent login" flow.
  */
-export const getRefresh = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
+export const getCbordSession = async (req: Request, res: Response) => {
   const { userId } = req.user!;
   const { pin } = req.body;
 
-  try {
-    const newSessionId = await cbordService.authenticatePin(
-      String(userId),
-      pin,
-    );
+  const newSessionId = await cbordService.authenticatePin(String(userId), pin);
 
-    return res.status(200).json({ sessionId: newSessionId });
-  } catch (error) {
-    return next(error);
-  }
+  return res.json({ sessionId: newSessionId });
 };

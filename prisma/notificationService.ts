@@ -1,6 +1,8 @@
-import { firebaseService, prisma } from '../src/firebase.js';
-import { getQueryTimeWindow } from '../src/utils/time.js';
 import cron from 'node-cron';
+
+import { prisma } from '../src/prisma.js';
+import { sendToTokens } from '../src/utils/notifications.js';
+import { getQueryTimeWindow } from '../src/utils/time.js';
 
 function buildMessage(
   matchesByEatery: Map<string, string[]>,
@@ -119,7 +121,7 @@ export async function main() {
       };
 
       try {
-        await firebaseService.sendToTokens(tokens, title, body, dataPayload);
+        await sendToTokens(tokens, title, body, dataPayload);
       } catch (e) {
         console.error(`Failed to send notification for user ${user.id}:`, e);
       }

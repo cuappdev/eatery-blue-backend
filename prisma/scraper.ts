@@ -183,15 +183,17 @@ function transformStaticEatery(rawStaticEatery: RawStaticEatery) {
       menuSummary: menuSummary,
       imageUrl: imageUrl,
       campusArea: mapCampusArea(rawStaticEatery.campusArea),
-      onlineOrderUrl: rawStaticEatery.onlineOrderUrl,
-      contactPhone: rawStaticEatery.contactPhone,
-      contactEmail: rawStaticEatery.contactEmail,
+      onlineOrderUrl: rawStaticEatery.onlineOrderUrl ?? null,
+      contactPhone: rawStaticEatery.contactPhone ?? null,
+      contactEmail: rawStaticEatery.contactEmail ?? null,
       latitude: rawStaticEatery.latitude,
       longitude: rawStaticEatery.longitude,
       location: rawStaticEatery.location,
       paymentMethods: Array.from(new Set(rawStaticEatery.payMethods.map(mapPaymentMethod))),
       eateryTypes: rawStaticEatery.eateryTypes.map(mapEateryType),
-      announcements: rawStaticEatery.announcements,
+      announcements: Array.isArray(rawStaticEatery.announcements)
+        ? rawStaticEatery.announcements.map((a: unknown) => typeof a === 'string' ? a : (a as { title?: string })?.title ?? '').filter(Boolean)
+        : [],
     },
     events,
   };
@@ -209,21 +211,23 @@ function transformEatery(rawEatery: RawEatery) {
     cornellId: rawEatery.id,
     name: rawEatery.name,
     shortName: rawEatery.nameshort,
-    about: rawEatery.about,
-    shortAbout: rawEatery.aboutshort,
-    cornellDining: rawEatery.cornellDining,
-    menuSummary: rawEatery.opHoursCalcDescr,
+    about: rawEatery.about || '',
+    shortAbout: rawEatery.aboutshort || '',
+    cornellDining: rawEatery.cornellDining ?? false,
+    menuSummary: rawEatery.opHoursCalcDescr || '',
     imageUrl: imageUrl,
     campusArea: mapCampusArea(rawEatery.campusArea),
-    onlineOrderUrl: rawEatery.onlineOrderUrl,
-    contactPhone: rawEatery.contactPhone,
-    contactEmail: rawEatery.contactEmail,
+    onlineOrderUrl: rawEatery.onlineOrderUrl ?? null,
+    contactPhone: rawEatery.contactPhone ?? null,
+    contactEmail: rawEatery.contactEmail ?? null,
     latitude: rawEatery.latitude,
     longitude: rawEatery.longitude,
-    location: rawEatery.location,
-    paymentMethods: Array.from(new Set(rawEatery.payMethods.map(mapPaymentMethod))),
-    eateryTypes: rawEatery.eateryTypes.map(mapEateryType),
-    announcements: rawEatery.announcements,
+    location: rawEatery.location || '',
+    paymentMethods: Array.from(new Set((rawEatery.payMethods ?? []).map(mapPaymentMethod))),
+    eateryTypes: (rawEatery.eateryTypes ?? []).map(mapEateryType),
+    announcements: Array.isArray(rawEatery.announcements)
+      ? rawEatery.announcements.map((a: unknown) => typeof a === 'string' ? a : (a as { title?: string })?.title ?? '').filter(Boolean)
+      : [],
   };
 
   const events: Array<{
@@ -346,7 +350,8 @@ async function processAllEateries(
   }>
 ) {
   return await prisma.$transaction(async (tx) => {
-    // Clear existing data
+    // Clear existing data (order matters due to foreign key constraints)
+    await tx.favoritedEatery.deleteMany({});
     await tx.event.deleteMany({});
     await tx.eatery.deleteMany({});
 
