@@ -40,6 +40,7 @@ enum EventType {
   BREAKFAST
   BRUNCH
   DINNER
+  LATE_NIGHT
   EMPTY
   LATE_LUNCH
   LUNCH

@@ -1,12 +1,20 @@
-import type { RawCampusArea, RawEateryType, RawPayMethod } from './scraperTypes.js';
-
 import {
   CampusArea,
   EateryType,
   EventType,
   PaymentMethod,
 } from '@prisma/client';
-import { EATERY_IMAGES_BASE_URL, Weekday, WEEKDAY_TO_DAY_OF_WEEK } from '../src/constants.js';
+
+import {
+  EATERY_IMAGES_BASE_URL,
+  WEEKDAY_TO_DAY_OF_WEEK,
+  Weekday,
+} from '../src/constants.js';
+import type {
+  RawCampusArea,
+  RawEateryType,
+  RawPayMethod,
+} from './scraperTypes.js';
 
 export function mapCampusArea(area: RawCampusArea): CampusArea {
   // Only consider descrshort for mapping
@@ -54,7 +62,7 @@ export function mapEateryType(type: RawEateryType): EateryType {
     case 'Dining Room':
       return EateryType.DINING_ROOM;
     case 'Cafe':
-        return EateryType.CAFE;
+      return EateryType.CAFE;
     case 'Coffee Shop':
       return EateryType.COFFEE_SHOP;
     case 'Food Court':
@@ -67,7 +75,7 @@ export function mapEateryType(type: RawEateryType): EateryType {
       return EateryType.GENERAL;
     default:
       throw new Error(`Unknown eatery type: ${type.descr}`);
-    }
+  }
 }
 
 export function mapEventType(eventDescription: string): EventType {
@@ -80,6 +88,8 @@ export function mapEventType(eventDescription: string): EventType {
       return EventType.BRUNCH;
     case 'Dinner':
       return EventType.DINNER;
+    case 'Late Night':
+      return EventType.LATE_NIGHT;
     case '':
       // Could be empty string in the case of general events (e.g. Amit Bhatia Libe Cafe since it serves all day)
       return EventType.EMPTY;
@@ -90,7 +100,7 @@ export function mapEventType(eventDescription: string): EventType {
     case 'Open':
       return EventType.OPEN;
     case 'Pants':
-      return EventType.PANTS;
+      return EventType.PANTS; // pants
     case 'General':
       return EventType.GENERAL;
     case 'Free Food':
@@ -167,15 +177,19 @@ export function parseTime(timeStr: string): { hours: number; minutes: number } {
   return { hours: hours ?? 0, minutes: minutes ?? 0 };
 }
 
-export function createWeeklyDate(weekday: string, timeStr: string, baseDate: Date = new Date()): Date {
+export function createWeeklyDate(
+  weekday: string,
+  timeStr: string,
+  baseDate: Date = new Date(),
+): Date {
   const dayOfWeek = weekdayToDayOfWeek(weekday);
   const { hours, minutes } = parseTime(timeStr);
   const date = new Date(baseDate);
   const currentDay = date.getDay();
   const daysUntilTarget = (dayOfWeek - currentDay + 7) % 7;
-  
+
   date.setDate(date.getDate() + daysUntilTarget);
   date.setHours(hours, minutes, 0, 0);
-  
+
   return date;
 }
