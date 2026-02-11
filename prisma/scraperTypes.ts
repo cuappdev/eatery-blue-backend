@@ -35,12 +35,10 @@ export type RawCoordinates = {
 export type RawOperatingHourEventMenuItem = {
   item: string;
   healthy: boolean;
-  sortIdx: number;
 };
 
 export type RawOperatingHourEventMenuCategory = {
   category: string;
-  sortIdx: number;
   items: RawOperatingHourEventMenuItem[];
 };
 
@@ -63,12 +61,10 @@ export type RawOperatingHour = {
 export type RawStaticOperatingHourEventMenuItem = {
   item: string;
   healthy: boolean;
-  sortIdx: number;
 };
 
 export type RawStaticOperatingHourEventMenuCategory = {
   category: string;
-  sortIdx: number;
   items: RawStaticOperatingHourEventMenuItem[];
 };
 

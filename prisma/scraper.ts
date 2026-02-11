@@ -4,7 +4,11 @@ import cron from 'node-cron';
 import { join } from 'path';
 
 import { PrismaClient } from '@prisma/client';
-import type { CampusArea, EateryType, PaymentMethod } from '@prisma/client';
+import {
+  type CampusArea,
+  EateryType,
+  type PaymentMethod,
+} from '@prisma/client';
 
 import { DEFAULT_IMAGE_URL } from '../src/constants.js';
 import {
@@ -18,6 +22,7 @@ import {
 import type {
   RawDiningItem,
   RawEatery,
+  RawOperatingHourEventMenuCategory,
   RawScrapedData,
   RawStaticEatery,
 } from './scraperTypes.js';
@@ -98,7 +103,7 @@ async function fetchFreedgeDiningItems(): Promise<RawDiningItem[]> {
       { signal: AbortSignal.timeout(10000) },
     );
 
-    if (response.status > 400) {
+    if (response.status >= 400) {
       console.log(`Failed to fetch freedge data: HTTP ${response.status}`);
       return [];
     }
@@ -147,6 +152,28 @@ async function fetchFreedgeDiningItems(): Promise<RawDiningItem[]> {
   }
 }
 
+function fetchCafeMenu(
+  diningItems: RawDiningItem[],
+): RawOperatingHourEventMenuCategory[] {
+  const grouped: Record<string, RawDiningItem[]> = {};
+
+  for (const item of diningItems) {
+    if (!grouped[item.category]) {
+      grouped[item.category] = [];
+    }
+
+    grouped[item.category].push(item);
+  }
+
+  return Object.entries(grouped).map(([category, items]) => ({
+    category,
+    items: items.map((item) => ({
+      item: item.item,
+      healthy: item.healthy,
+    })),
+  }));
+}
+
 function extractAnnouncements(announcements?: { title: string }[]): string[] {
   if (!Array.isArray(announcements)) return [];
 
@@ -162,11 +189,9 @@ function transformStaticEatery(rawStaticEatery: RawStaticEatery) {
     endTimestamp: Date;
     menu: Array<{
       category: string;
-      sortIdx: number;
       items: Array<{
         item: string;
         healthy: boolean;
-        sortIdx: number;
       }>;
     }>;
   }> = [];
@@ -184,7 +209,7 @@ function transformStaticEatery(rawStaticEatery: RawStaticEatery) {
         type: event.descr || 'General',
         startTimestamp: startDate,
         endTimestamp: endDate,
-        menu: event.menu || [],
+        menu: fetchCafeMenu(rawStaticEatery.diningItems) || [],
       });
     }
   }
@@ -228,6 +253,7 @@ function transformStaticEatery(rawStaticEatery: RawStaticEatery) {
         new Set(rawStaticEatery.payMethods.map(mapPaymentMethod)),
       ),
       eateryTypes: rawStaticEatery.eateryTypes.map(mapEateryType),
+      diningItems: rawStaticEatery.diningItems,
       announcements: extractAnnouncements(rawStaticEatery.announcements),
     },
     events,
@@ -249,7 +275,7 @@ function transformEatery(rawEatery: RawEatery) {
     about: rawEatery.about,
     shortAbout: rawEatery.aboutshort,
     cornellDining: rawEatery.cornellDining,
-    menuSummary: rawEatery.opHoursCalcDescr,
+    menuSummary: 'Cornell Eatery',
     imageUrl: imageUrl,
     campusArea: mapCampusArea(rawEatery.campusArea),
     onlineOrderUrl: rawEatery.onlineOrderUrl,
@@ -258,6 +284,7 @@ function transformEatery(rawEatery: RawEatery) {
     latitude: rawEatery.latitude,
     longitude: rawEatery.longitude,
     location: rawEatery.location,
+    diningItems: rawEatery.diningItems,
     paymentMethods: Array.from(
       new Set(rawEatery.payMethods.map(mapPaymentMethod)),
     ),
@@ -271,31 +298,40 @@ function transformEatery(rawEatery: RawEatery) {
     endTimestamp: Date;
     menu: Array<{
       category: string;
-      sortIdx: number;
       items: Array<{
         item: string;
         healthy: boolean;
-        sortIdx: number;
       }>;
     }>;
   }> = [];
 
+  let cafeDiningItems: RawOperatingHourEventMenuCategory[] = [];
+  if (eateryData.eateryTypes.includes(EateryType.CAFE)) {
+    cafeDiningItems = fetchCafeMenu(eateryData.diningItems);
+  }
   for (const operatingHour of rawEatery.operatingHours) {
     for (const event of operatingHour.events) {
-      events.push({
-        type: event.descr,
-        startTimestamp: new Date(event.startTimestamp * 1000),
-        endTimestamp: new Date(event.endTimestamp * 1000),
-        menu: event.menu.map((cat) => ({
-          category: cat.category,
-          sortIdx: cat.sortIdx,
-          items: cat.items.map((item) => ({
-            item: item.item,
-            healthy: item.healthy,
-            sortIdx: item.sortIdx,
+      if (eateryData.eateryTypes.includes(EateryType.CAFE)) {
+        events.push({
+          type: event.descr,
+          startTimestamp: new Date(event.startTimestamp * 1000),
+          endTimestamp: new Date(event.endTimestamp * 1000),
+          menu: cafeDiningItems,
+        });
+      } else {
+        events.push({
+          type: event.descr,
+          startTimestamp: new Date(event.startTimestamp * 1000),
+          endTimestamp: new Date(event.endTimestamp * 1000),
+          menu: event.menu.map((cat) => ({
+            category: cat.category,
+            items: cat.items.map((item) => ({
+              item: item.item,
+              healthy: item.healthy,
+            })),
           })),
-        })),
-      });
+        });
+      }
     }
   }
 
@@ -372,6 +408,7 @@ async function processAllEateries(
       location: string;
       paymentMethods: PaymentMethod[];
       eateryTypes: EateryType[];
+      diningItems: RawDiningItem[];
       announcements: string[];
     };
     events: Array<{
@@ -380,11 +417,9 @@ async function processAllEateries(
       endTimestamp: Date;
       menu: Array<{
         category: string;
-        sortIdx: number;
         items: Array<{
           item: string;
           healthy: boolean;
-          sortIdx: number;
         }>;
       }>;
     }>;
@@ -402,10 +437,11 @@ async function processAllEateries(
         const batch = transformedEateries.slice(i, i + BATCH_SIZE);
 
         await Promise.all(
-          batch.map(({ eatery, events }) =>
-            tx.eatery.create({
+          batch.map(({ eatery, events }) => {
+            const { diningItems, ...eaterySanitized } = eatery;
+            return tx.eatery.create({
               data: {
-                ...eatery,
+                ...eaterySanitized,
                 events: {
                   create: events.map((rawEvent) => ({
                     type: mapEventType(rawEvent.type),
@@ -424,8 +460,8 @@ async function processAllEateries(
                   })),
                 },
               },
-            }),
-          ),
+            });
+          }),
         );
       }
     },
@@ -703,7 +739,7 @@ function startScraperScheduler() {
   const cronExpression = process.env.SCRAPER_CRON_SCHEDULE || '0 7,19 * * *';
 
   console.log('[Scheduler] Initializing scraper scheduler...');
-  console.log('[Scheduler] Schedule: Daily at 7:00 AM and 7:00 PM');
+  console.log(`[Scheduler] Schedule: ${cronExpression} (America/New_York)`);
 
   const task = cron.schedule(cronExpression, runScraperSafely, {
     timezone: 'America/New_York',
