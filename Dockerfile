@@ -16,6 +16,9 @@ COPY prisma ./prisma/
 # Generate Prisma client
 RUN npx prisma generate
 
+# Sync schema with db
+RUN npx prisma db push
+
 # Copy TypeScript configuration and source code
 COPY tsconfig.json ./
 COPY src ./src/
