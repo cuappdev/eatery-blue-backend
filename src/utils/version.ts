@@ -1,7 +1,7 @@
-import { Router, type Request, type Response } from 'express';
+import { type Request, type Response, Router } from 'express';
 
-const ITUNES_LOOKUP_URL =
-  'https://itunes.apple.com/lookup?bundleId=org.cuappdev.eatery';
+import { ITUNES_LOOKUP_URL } from '../constants.js';
+import { BadGatewayError } from './AppError.js';
 
 interface iTunesLookupResult {
   resultCount: number;
@@ -13,12 +13,12 @@ async function fetchAppVersion(): Promise<string> {
   const data = (await response.json()) as iTunesLookupResult;
 
   if (!response.ok || !data.results?.length) {
-    throw new Error('Failed to fetch app version from App Store');
+    throw new BadGatewayError('Failed to fetch app version from App Store');
   }
 
   const version = data.results[0]?.version;
   if (!version) {
-    throw new Error('Version not found in App Store response');
+    throw new BadGatewayError('Version not found in App Store response');
   }
 
   return version;
@@ -27,13 +27,6 @@ async function fetchAppVersion(): Promise<string> {
 export const versionRouter = Router();
 
 versionRouter.get('/', async (_req: Request, res: Response) => {
-  try {
-    const version = await fetchAppVersion();
-    res.json({ version });
-  } catch (error) {
-    res.status(503).json({
-      error: 'Unable to fetch app version',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
-  }
+  const version = await fetchAppVersion();
+  return res.json({ version });
 });
