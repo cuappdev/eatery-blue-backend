@@ -12,8 +12,8 @@ import { requestLogger } from './middleware/logger.js';
 import { ipRateLimiter } from './middleware/rateLimit.js';
 import { prisma } from './prisma.js';
 import userRouter from './users/userRouter.js';
-import { cacheRouter } from './utils/cache.js';
-import { refreshCacheFromDB } from './utils/cache.js';
+import { cacheRouter, refreshCacheFromDB } from './utils/cache.js';
+import { versionRouter } from './utils/version.js';
 
 const app = express();
 
@@ -52,6 +52,7 @@ router.get('/health', async (_: Request, res: Response) => {
 // Public routes
 router.use('/auth', authRouter);
 router.use('/internal/cache', cacheRouter);
+router.use('/version', versionRouter);
 router.use('/eateries', eateryRouter);
 
 // Protected routes
