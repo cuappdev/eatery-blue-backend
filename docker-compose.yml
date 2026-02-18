@@ -3,6 +3,8 @@ version: '3.8'
 services:
   app:
     image: cornellappdev/eatery-blue-dev:${IMAGE_TAG}
+    command: >
+      sh -c "npx prisma db push && npm run start"
     configs:
       - source: firebase_service_account
         target: /app/firebase-service-account.json
