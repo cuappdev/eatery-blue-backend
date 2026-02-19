@@ -38,22 +38,20 @@ jobs:
         env:
           PRIVATE_KEY: ${{ secrets.PROD_SERVER_KEY }}
           HOST: ${{ secrets.PROD_SERVER_HOST }}
-          USER: ${{ secrets.SERVER_USERNAME }}
+          REMOTE_USER: ${{ secrets.SERVER_USERNAME }}
           IMAGE_TAG: ${{ steps.vars.outputs.sha_short }}
         run: |
-          # Setup SSH directory
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
-
-          # Save the Private Key to a file using the env var
-          echo "$PRIVATE_KEY" > ~/.ssh/id_rsa
+          
+          # Using printf instead of echo prevents newline formatting bugs
+          printf "%s\n" "$PRIVATE_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-
-          # Add the server to known_hosts to avoid prompt
+          
           ssh-keyscan -H "$HOST" >> ~/.ssh/known_hosts
-
-          # Run the remote commands
-          ssh -i ~/.ssh/id_rsa "$USER@$HOST" "
+          
+          # Added -v for debugging, -o for RSA support, and $REMOTE_USER
+          ssh -v -o PubkeyAcceptedKeyTypes=+ssh-rsa -i ~/.ssh/id_rsa "$REMOTE_USER@$HOST" "
             export IMAGE_TAG=$IMAGE_TAG
             cd docker-compose
             docker stack rm thestack
