@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   app:
-    image: cornellappdev/eatery-blue-dev:${IMAGE_TAG}
+    image: cornellappdev/eatery-prod:${IMAGE_TAG}
     command: >
       sh -c "npx prisma db push && npm run start"
     configs:
@@ -17,7 +17,7 @@ services:
       - scraper
 
   scraper:
-    image: cornellappdev/eatery-blue-dev:${IMAGE_TAG}
+    image: cornellappdev/eatery-prod:${IMAGE_TAG}
     env_file: .env
     networks:
       - eatery-network
