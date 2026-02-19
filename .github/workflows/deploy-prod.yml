@@ -34,18 +34,30 @@ jobs:
           push: true
           tags: cornellappdev/eatery-prod:${{ steps.vars.outputs.sha_short }}
 
-      - name: Remote SSH and Deploy
-        uses: appleboy/ssh-action@v1.0.3
+      - name: Deploy with Native SSH
         env:
+          PRIVATE_KEY: ${{ secrets.PROD_SERVER_KEY }}
+          HOST: ${{ secrets.PROD_SERVER_HOST }}
+          USER: ${{ secrets.SERVER_USERNAME }}
           IMAGE_TAG: ${{ steps.vars.outputs.sha_short }}
-        with:
-          host: ${{ secrets.PROD_SERVER_HOST }}
-          username: ${{ secrets.SERVER_USERNAME }}
-          key: ${{ secrets.PROD_SERVER_KEY }}
-          script: |
-            export IMAGE_TAG=${{ steps.vars.outputs.sha_short }}
+        run: |
+          # Setup SSH directory
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+
+          # Save the Private Key to a file using the env var
+          echo "$PRIVATE_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+          # Add the server to known_hosts to avoid prompt
+          ssh-keyscan -H "$HOST" >> ~/.ssh/known_hosts
+
+          # Run the remote commands
+          ssh -i ~/.ssh/id_rsa "$USER@$HOST" "
+            export IMAGE_TAG=$IMAGE_TAG
             cd docker-compose
             docker stack rm thestack
-            sleep 20s
+            sleep 20
             docker stack deploy -c docker-compose.yml thestack
-            yes | docker system prune -a
+            docker system prune -af
+          "
