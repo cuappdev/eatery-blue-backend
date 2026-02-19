@@ -44,13 +44,12 @@ jobs:
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
           
-          # Using printf instead of echo prevents newline formatting bugs
-          printf "%s\n" "$PRIVATE_KEY" > ~/.ssh/id_rsa
+          # Safely write the key and strip any invisible Windows carriage returns
+          echo "$PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           
           ssh-keyscan -H "$HOST" >> ~/.ssh/known_hosts
           
-          # Added -v for debugging, -o for RSA support, and $REMOTE_USER
           ssh -v -o PubkeyAcceptedKeyTypes=+ssh-rsa -i ~/.ssh/id_rsa "$REMOTE_USER@$HOST" "
             export IMAGE_TAG=$IMAGE_TAG
             cd docker-compose
