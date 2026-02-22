@@ -7,6 +7,11 @@ import { getFinancials } from './financialsController.js';
 
 const router = Router();
 
-router.post('/', requireAuth, validateRequest(getFinancialsSchema), getFinancials);
+router.post(
+  '/',
+  requireAuth,
+  validateRequest(getFinancialsSchema),
+  getFinancials,
+);
 
 export default router;

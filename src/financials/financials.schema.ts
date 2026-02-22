@@ -5,4 +5,3 @@ export const getFinancialsSchema = z.object({
     sessionId: z.string().nonempty('Session ID is required'),
   }),
 });
-

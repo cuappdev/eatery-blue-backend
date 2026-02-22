@@ -6,6 +6,7 @@ export enum ErrorCodes {
   NOT_FOUND = 'NOT_FOUND', // 404
   CONFLICT = 'CONFLICT', // 409
   TOO_MANY_REQUESTS = 'TOO_MANY_REQUESTS', // 429
+  BAD_GATEWAY = 'BAD_GATEWAY', // 502
 }
 
 export class AppError extends Error {
@@ -83,5 +84,11 @@ export class TooManyRequestsError extends AppError {
     data?: Record<string, unknown>,
   ) {
     super(message, 429, ErrorCodes.TOO_MANY_REQUESTS, data);
+  }
+}
+
+export class BadGatewayError extends AppError {
+  constructor(message: string = 'Bad Gateway', data?: Record<string, unknown>) {
+    super(message, 502, ErrorCodes.BAD_GATEWAY, data);
   }
 }

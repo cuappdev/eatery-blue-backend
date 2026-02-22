@@ -6,6 +6,8 @@ export const DEFAULT_IMAGE_URL =
 
 /** How many hours ahead to look for events when sending notifications */
 export const NOTIFICATION_LOOKAHEAD_HOURS = 7;
+export const ITUNES_LOOKUP_URL =
+  'https://itunes.apple.com/lookup?bundleId=org.cuappdev.eatery';
 
 export enum Weekday {
   SUNDAY = 'Sunday',

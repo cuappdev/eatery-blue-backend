@@ -1,7 +1,7 @@
 import type admin from 'firebase-admin';
 
-import { prisma } from '../prisma.js';
 import { firebaseMessaging } from '../firebase.js';
+import { prisma } from '../prisma.js';
 
 /**
  * Send a push notification to multiple FCM tokens.
@@ -85,4 +85,3 @@ async function cleanupFailedTokens(tokens: string[]) {
     console.error('Error cleaning up failed tokens:', e);
   }
 }
-
