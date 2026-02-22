@@ -14,7 +14,8 @@
     "format": "prettier --write '{src,test}/**/*.ts'",
     "scrape": "tsx prisma/scraper.ts",
     "scrape:scheduled": "SCHEDULED_MODE=true node dist/prisma/scraper.js",
-    "studio": "prisma studio"
+    "studio": "prisma studio",
+    "send-notifications": "tsx prisma/notificationService.ts"
   },
   "repository": {
     "type": "git",
@@ -29,10 +30,12 @@
   "homepage": "https://github.com/cuappdev/eatery-blue-backend#readme",
   "dependencies": {
     "@prisma/client": "^6.16.2",
+    "date-fns": "^4.1.0",
+    "date-fns-tz": "^3.2.0",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "express-rate-limit": "^8.1.0",
-    "firebase-admin": "^13.5.0",
+    "firebase-admin": "^13.6.0",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
     "node-cache": "^5.1.2",

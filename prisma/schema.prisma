@@ -101,7 +101,7 @@ model Report {
 model Eatery {
   id             Int             @id @default(autoincrement())
   cornellId      Int?            @unique
-  announcements  String[]
+  announcements  String[]        @default([])
   name           String
   shortName      String
   about          String
