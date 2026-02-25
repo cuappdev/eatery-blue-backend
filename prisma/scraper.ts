@@ -152,7 +152,7 @@ async function fetchFreedgeDiningItems(): Promise<RawDiningItem[]> {
   }
 }
 
-function fetchCafeMenu(
+function fetchNonDiningHallMenu(
   diningItems: RawDiningItem[],
 ): RawOperatingHourEventMenuCategory[] {
   const grouped: Record<string, RawDiningItem[]> = {};
@@ -161,7 +161,6 @@ function fetchCafeMenu(
     if (!grouped[item.category]) {
       grouped[item.category] = [];
     }
-
     grouped[item.category].push(item);
   }
 
@@ -209,7 +208,7 @@ function transformStaticEatery(rawStaticEatery: RawStaticEatery) {
         type: event.descr || 'General',
         startTimestamp: startDate,
         endTimestamp: endDate,
-        menu: fetchCafeMenu(rawStaticEatery.diningItems) || [],
+        menu: fetchNonDiningHallMenu(rawStaticEatery.diningItems) || [],
       });
     }
   }
@@ -306,12 +305,12 @@ function transformEatery(rawEatery: RawEatery) {
   }> = [];
 
   let cafeDiningItems: RawOperatingHourEventMenuCategory[] = [];
-  if (eateryData.eateryTypes.includes(EateryType.CAFE)) {
-    cafeDiningItems = fetchCafeMenu(eateryData.diningItems);
+  if (!eateryData.eateryTypes.includes(EateryType.DINING_ROOM)) {
+    cafeDiningItems = fetchNonDiningHallMenu(eateryData.diningItems);
   }
   for (const operatingHour of rawEatery.operatingHours) {
     for (const event of operatingHour.events) {
-      if (eateryData.eateryTypes.includes(EateryType.CAFE)) {
+      if (!eateryData.eateryTypes.includes(EateryType.DINING_ROOM)) {
         events.push({
           type: event.descr,
           startTimestamp: new Date(event.startTimestamp * 1000),
@@ -319,6 +318,7 @@ function transformEatery(rawEatery: RawEatery) {
           menu: cafeDiningItems,
         });
       } else {
+        if (!event.menu || event.menu.length === 0) continue;
         events.push({
           type: event.descr,
           startTimestamp: new Date(event.startTimestamp * 1000),
