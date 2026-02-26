@@ -14,6 +14,6 @@ export const favoriteItemSchema = z.object({
 
 export const favoriteEaterySchema = z.object({
   body: z.object({
-    eateryId: z.number().int().positive('eateryId must be a positive integer'),
+    cornellId: z.number().int('cornellId must be an integer'),
   }),
 });
