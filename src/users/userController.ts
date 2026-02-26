@@ -139,7 +139,7 @@ export const addFavoriteEatery = async (
   next: NextFunction,
 ) => {
   try {
-    const { eateryId } = req.body;
+    const { cornellId } = req.body;
     const { userId } = req.user!;
 
     const user = await prisma.user.findUnique({
@@ -153,14 +153,14 @@ export const addFavoriteEatery = async (
     // Use upsert to avoid crashing if the relation already exists
     await prisma.favoritedEatery.upsert({
       where: {
-        userId_eateryId: {
+        userId_cornellId: {
           userId: user.id,
-          eateryId: eateryId,
+          cornellId: cornellId,
         },
       },
       create: {
         userId: user.id,
-        eateryId: eateryId,
+        cornellId: cornellId,
       },
       update: {},
     });
@@ -177,7 +177,7 @@ export const removeFavoriteEatery = async (
   _next: NextFunction,
 ) => {
   try {
-    const { eateryId } = req.body;
+    const { cornellId } = req.body;
     const { userId } = req.user!;
 
     const user = await prisma.user.findUnique({
@@ -188,9 +188,9 @@ export const removeFavoriteEatery = async (
     }
     await prisma.favoritedEatery.delete({
       where: {
-        userId_eateryId: {
+        userId_cornellId: {
           userId: user.id,
-          eateryId: eateryId,
+          cornellId: cornellId,
         },
       },
     });

@@ -64,12 +64,11 @@ model User {
 }
 
 model FavoritedEatery {
-  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId   Int
-  eatery   Eatery @relation(fields: [eateryId], references: [id])
-  eateryId Int
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int
+  cornellId Int  // Stable eatery identifier that persists across scrapes
 
-  @@id([userId, eateryId])
+  @@id([userId, cornellId])
 }
 
 model FCMToken {
@@ -120,9 +119,8 @@ model Eatery {
   eateryTypes    EateryType[]
   createdAt      DateTime        @default(now())
 
-  events            Event[]
-  favoritedEateries FavoritedEatery[]
-  reports           Report[]
+  events  Event[]
+  reports Report[]
 }
 
 model Event {
