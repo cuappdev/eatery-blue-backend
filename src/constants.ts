@@ -9,6 +9,10 @@ export const NOTIFICATION_LOOKAHEAD_HOURS = 7;
 export const ITUNES_LOOKUP_URL =
   'https://itunes.apple.com/lookup?bundleId=org.cuappdev.eatery';
 
+export enum TimeZone {
+  EASTERN = 'America/New_York',
+}
+
 export enum Weekday {
   SUNDAY = 'Sunday',
   MONDAY = 'Monday',
