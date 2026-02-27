@@ -2,31 +2,28 @@ version: '3.8'
 
 services:
   app:
-    image: cornellappdev/eatery-blue-dev:${IMAGE_TAG}
+    image: cornellappdev/eatery-prod:${IMAGE_TAG}
     command: >
       sh -c "npx prisma db push && npm run start"
-    configs:
-      - source: firebase_service_account
-        target: /app/firebase-service-account.json
+    volumes:
+      - ./firebase-service-account.json:/app/firebase-service-account.json
     env_file: .env
     networks:
-      - eatery-network
+      eatery-network:
+        aliases:
+          - app
     ports:
-      - "8000:8000"
+      - '127.0.0.1:8000:8000'
     depends_on:
       - scraper
 
   scraper:
-    image: cornellappdev/eatery-blue-dev:${IMAGE_TAG}
+    image: cornellappdev/eatery-prod:${IMAGE_TAG}
     env_file: .env
     networks:
       - eatery-network
-    command: ["sh", "-c", "npx prisma migrate deploy && npm run scrape:scheduled"]
+    command:
+      ['sh', '-c', 'npx prisma migrate deploy && npm run scrape:scheduled']
 
 networks:
   eatery-network:
-    driver: overlay
-
-configs:
-  firebase_service_account:
-    file: ./firebase-service-account.json

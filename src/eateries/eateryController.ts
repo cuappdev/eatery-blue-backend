@@ -11,7 +11,10 @@ export const getAllEateries = async (req: Request, res: Response) => {
 };
 
 export const getEateryById = async (req: Request, res: Response) => {
-  const eateryId = parseInt(req.params.eateryId, 10);
+  const raw = req.params.eateryId;
+  const idStr = Array.isArray(raw) ? raw[0] : raw;
+
+  const eateryId = parseInt(idStr, 10);
   const eatery = await eateryService.getEateryById(eateryId);
   return res.json(eatery);
 };

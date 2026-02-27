@@ -1,5 +1,9 @@
+import { endOfDay, startOfDay } from 'date-fns';
+import { fromZonedTime, toZonedTime } from 'date-fns-tz';
+
 import type { Event } from '@prisma/client';
 
+import { TimeZone } from '../constants.js';
 import { NotFoundError } from '../utils/AppError.js';
 import { getAllEateriesData, refreshCacheFromDB } from '../utils/cache.js';
 import type { EateryWithEvents } from '../utils/cache.js';
@@ -22,7 +26,7 @@ export const getAllEateries = async (days?: number) => {
     return cachedEateries;
   }
 
-  // Calculate date range for filtering events using UTC to match event timestamps
+  // Calculate date range in EST
   // days=0 means today, days=1 means tomorrow, days=2 means day after tomorrow, etc.
   const now = new Date();
 
@@ -31,31 +35,13 @@ export const getAllEateries = async (days?: number) => {
   const targetTimestamp = now.getTime() + days * msPerDay;
   const targetDate = new Date(targetTimestamp);
 
-  // Set to start of day in UTC
-  const startOfDay = new Date(
-    Date.UTC(
-      targetDate.getUTCFullYear(),
-      targetDate.getUTCMonth(),
-      targetDate.getUTCDate(),
-      0,
-      0,
-      0,
-      0,
-    ),
-  );
+  const targetDateEST = toZonedTime(targetDate, TimeZone.EASTERN);
+  const startOfDayEST = startOfDay(targetDateEST);
+  const endOfDayEST = endOfDay(targetDateEST);
 
-  // Set to end of day in UTC
-  const endOfDay = new Date(
-    Date.UTC(
-      targetDate.getUTCFullYear(),
-      targetDate.getUTCMonth(),
-      targetDate.getUTCDate(),
-      23,
-      59,
-      59,
-      999,
-    ),
-  );
+  // Get the EST times in UTC to compare with event timestamps
+  const startOfDayUTC = fromZonedTime(startOfDayEST, TimeZone.EASTERN);
+  const endOfDayUTC = fromZonedTime(endOfDayEST, TimeZone.EASTERN);
 
   // Filter events to only include those on the specified day
   const filteredEateries = cachedEateries.map((eatery) => ({
@@ -64,8 +50,8 @@ export const getAllEateries = async (days?: number) => {
       const eventStart = new Date(event.startTimestamp);
       const eventEnd = new Date(event.endTimestamp);
 
-      // Include event if it overlaps with the target day
-      return eventStart <= endOfDay && eventEnd >= startOfDay;
+      // Include event if it overlaps with the target day in EST
+      return eventStart <= endOfDayUTC && eventEnd >= startOfDayUTC;
     }),
   }));
 
