@@ -1,3 +1,4 @@
+import { fromZonedTime } from 'date-fns-tz';
 import 'dotenv/config';
 import { readFileSync } from 'fs';
 import cron from 'node-cron';
@@ -11,6 +12,7 @@ import {
 } from '@prisma/client';
 
 import { DEFAULT_IMAGE_URL } from '../src/constants.js';
+import { TimeZone } from '../src/constants.js';
 import {
   createWeeklyDate,
   mapCampusArea,
@@ -197,8 +199,14 @@ function transformStaticEatery(rawStaticEatery: RawStaticEatery) {
 
   for (const operatingHour of rawStaticEatery.operatingHours) {
     for (const event of operatingHour.events) {
-      const startDate = createWeeklyDate(operatingHour.weekday, event.start);
-      const endDate = createWeeklyDate(operatingHour.weekday, event.end);
+      const startDate = fromZonedTime(
+        createWeeklyDate(operatingHour.weekday, event.start),
+        TimeZone.EASTERN,
+      );
+      const endDate = fromZonedTime(
+        createWeeklyDate(operatingHour.weekday, event.end),
+        TimeZone.EASTERN,
+      );
 
       if (endDate < startDate) {
         endDate.setDate(endDate.getDate() + 1);
