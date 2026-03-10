@@ -10,13 +10,6 @@ export const requireAuth = (
   _res: Response,
   next: NextFunction,
 ) => {
-  // Development bypass
-  if (process.env.NODE_ENV === 'development') {
-    req.user = {
-      userId: 1,
-    };
-    return next();
-  }
 
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
