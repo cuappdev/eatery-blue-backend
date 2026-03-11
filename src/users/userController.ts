@@ -226,7 +226,7 @@ export const getFavoriteMatches = async (
     const { favoritedItemNames } = user;
 
     if (favoritedItemNames.length === 0) {
-      return res.json({});
+      return res.json([]);
     }
 
     const { start, end } = getTodayTimeWindow();
@@ -271,7 +271,10 @@ export const getFavoriteMatches = async (
     });
 
     // Format the response
-    const matches: Record<string, { name: string; events: EventType[] }[]> = {};
+    const matches: {
+      eateryName: string;
+      items: { name: string; events: EventType[] }[];
+    }[] = [];
     const userFavoritesSet = new Set(favoritedItemNames);
 
     for (const eatery of eateries) {
@@ -292,12 +295,15 @@ export const getFavoriteMatches = async (
       }
 
       if (itemToEventsMap.size > 0) {
-        matches[eatery.name] = Array.from(itemToEventsMap.entries()).map(
-          ([itemName, eventSet]) => ({
-            name: itemName,
-            events: Array.from(eventSet).sort(),
-          }),
-        );
+        matches.push({
+          eateryName: eatery.name,
+          items: Array.from(itemToEventsMap.entries()).map(
+            ([itemName, eventSet]) => ({
+              name: itemName,
+              events: Array.from(eventSet).sort(),
+            }),
+          ),
+        });
       }
     }
 
