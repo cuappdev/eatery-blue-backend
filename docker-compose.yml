@@ -24,6 +24,7 @@ services:
       - eatery-network
     command:
       ['sh', '-c', 'npx prisma migrate deploy && npm run scrape:scheduled']
+    restart: unless-stopped
 
 networks:
   eatery-network:
