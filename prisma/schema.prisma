@@ -62,7 +62,8 @@ model User {
   dislikedItemNames  String[]
   userEventVotes     UserEventVote[]
 
-  @@index(favoritedItemNames, type: Gin) // The performance magic
+  // Allows for efficient reverse lookup: find users by favorited/liked/disliked item names
+  @@index([favoritedItemNames, likedItemNames, dislikedItemNames], type: Gin)
 }
 
 model FavoritedEatery {
