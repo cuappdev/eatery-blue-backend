@@ -58,6 +58,8 @@ model User {
   reports            Report[]
   favoritedEateries  FavoritedEatery[]
   favoritedItemNames String[]
+  likedItemNames     String[]
+  dislikedItemNames  String[]
   userEventVotes     UserEventVote[]
 
   @@index(favoritedItemNames, type: Gin) // The performance magic
