@@ -17,6 +17,8 @@ export const getMe = async (req: Request, res: Response) => {
       reports: true,
       favoritedEateries: true,
       favoritedItemNames: true,
+      likedItemNames: true,
+      dislikedItemNames: true,
       userEventVotes: true,
     },
   });
@@ -62,6 +64,58 @@ export const removeFcmToken = async (
     res.status(200).json({ message: 'Token removed successfully.' });
   } catch (e) {
     res.status(200).json({ message: 'Token removal processed. Error: ' + e });
+  }
+};
+
+const makeItemKey = (name: string, cornellId: number): string => {
+  return `${name}|${cornellId}`;
+};
+
+export const setItemPreference = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const { name, cornellId, preference } = req.body as {
+      name: string;
+      cornellId: number;
+      preference: 'liked' | 'disliked' | 'none';
+    };
+    const { userId } = req.user!;
+
+    const itemKey = makeItemKey(name, cornellId);
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+
+    const likedSet = new Set(user.likedItemNames);
+    const dislikedSet = new Set(user.dislikedItemNames);
+
+    likedSet.delete(itemKey);
+    dislikedSet.delete(itemKey);
+
+    if (preference === 'liked') {
+      likedSet.add(itemKey);
+    } else if (preference === 'disliked') {
+      dislikedSet.add(itemKey);
+    }
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        likedItemNames: Array.from(likedSet),
+        dislikedItemNames: Array.from(dislikedSet),
+      },
+    });
+
+    return res.status(200).json({ message: 'Item preference updated.' });
+  } catch (error) {
+    return next(error);
   }
 };
 
