@@ -3,6 +3,7 @@ import type { EventType } from '@prisma/client';
 import type { NextFunction, Request, Response } from 'express';
 
 import { prisma } from '../prisma.js';
+import { makeItemKey } from '../utils/itemKey.js';
 import { getTodayTimeWindow } from '../utils/time.js';
 
 export const getMe = async (req: Request, res: Response) => {
@@ -65,10 +66,6 @@ export const removeFcmToken = async (
   } catch (e) {
     res.status(200).json({ message: 'Token removal processed. Error: ' + e });
   }
-};
-
-const makeItemKey = (name: string, cornellId: number): string => {
-  return `${name}|${cornellId}`;
 };
 
 export const setItemPreference = async (
