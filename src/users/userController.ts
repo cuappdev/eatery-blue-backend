@@ -95,6 +95,13 @@ export const setItemPreference = async (
 
     const likedSet = new Set(user.likedItemNames);
     const dislikedSet = new Set(user.dislikedItemNames);
+    const previousPreference: 'liked' | 'disliked' | 'none' = likedSet.has(
+      itemKey,
+    )
+      ? 'liked'
+      : dislikedSet.has(itemKey)
+        ? 'disliked'
+        : 'none';
 
     likedSet.delete(itemKey);
     dislikedSet.delete(itemKey);
@@ -105,12 +112,42 @@ export const setItemPreference = async (
       dislikedSet.add(itemKey);
     }
 
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        likedItemNames: Array.from(likedSet),
-        dislikedItemNames: Array.from(dislikedSet),
-      },
+    const likeDelta =
+      (preference === 'liked' ? 1 : 0) -
+      (previousPreference === 'liked' ? 1 : 0);
+    const dislikeDelta =
+      (preference === 'disliked' ? 1 : 0) -
+      (previousPreference === 'disliked' ? 1 : 0);
+
+    await prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id: user.id },
+        data: {
+          likedItemNames: Array.from(likedSet),
+          dislikedItemNames: Array.from(dislikedSet),
+        },
+      });
+
+      // Create item preference count for this item if it doesn't exist
+      await tx.itemPreferenceCounts.upsert({
+        where: { itemKey },
+        create: {
+          itemKey,
+          numLikes: 0,
+          numDislikes: 0,
+        },
+        update: {},
+      });
+
+      if (likeDelta !== 0 || dislikeDelta !== 0) {
+        await tx.itemPreferenceCounts.update({
+          where: { itemKey },
+          data: {
+            numLikes: { increment: likeDelta },
+            numDislikes: { increment: dislikeDelta },
+          },
+        });
+      }
     });
 
     return res.status(200).json({ message: 'Item preference updated.' });
