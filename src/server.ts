@@ -7,6 +7,7 @@ import type { Request, Response } from 'express';
 import authRouter from './auth/authRouter.js';
 import eateryRouter from './eateries/eateryRouter.js';
 import financialRouter from './financials/financialsRouter.js';
+import itemRouter from './items/itemRouter.js';
 import { requireAuth } from './middleware/authentication.js';
 import { globalErrorHandler } from './middleware/errorHandler.js';
 import { requestLogger } from './middleware/logger.js';
@@ -55,6 +56,7 @@ router.use('/auth', authRouter);
 router.use('/internal/cache', cacheRouter);
 router.use('/version', versionRouter);
 router.use('/eateries', eateryRouter);
+router.use('/items', itemRouter);
 
 // Protected routes
 router.use(requireAuth);
