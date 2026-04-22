@@ -1,10 +1,17 @@
 import type { EventType } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 
 import type { NextFunction, Request, Response } from 'express';
 
 import { prisma } from '../prisma.js';
+import { NotFoundError } from '../utils/AppError.js';
 import { makeItemKey } from '../utils/itemKey.js';
 import { getTodayTimeWindow } from '../utils/time.js';
+
+const SERIALIZABLE_TX_MAX_ATTEMPTS = 5;
+
+const isSerializationFailure = (err: unknown): boolean =>
+  err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2034';
 
 export const getMe = async (req: Request, res: Response) => {
   const { userId } = req.user!;
@@ -82,70 +89,91 @@ export const setItemPreference = async (
     const { userId } = req.user!;
 
     const itemKey = makeItemKey(name, cornellId);
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-    });
 
-    if (!user) {
-      return res.status(404).json({ message: 'User not found.' });
-    }
+    for (let attempt = 0; attempt < SERIALIZABLE_TX_MAX_ATTEMPTS; attempt++) {
+      try {
+        await prisma.$transaction(
+          async (tx) => {
+            const user = await tx.user.findUnique({
+              where: { id: userId },
+              select: {
+                id: true,
+                likedItemKeys: true,
+                dislikedItemKeys: true,
+              },
+            });
 
-    const likedSet = new Set(user.likedItemKeys);
-    const dislikedSet = new Set(user.dislikedItemKeys);
-    const previousPreference: 'liked' | 'disliked' | 'none' = likedSet.has(
-      itemKey,
-    )
-      ? 'liked'
-      : dislikedSet.has(itemKey)
-        ? 'disliked'
-        : 'none';
+            if (!user) {
+              throw new NotFoundError('User not found.');
+            }
 
-    likedSet.delete(itemKey);
-    dislikedSet.delete(itemKey);
+            const likedSet = new Set(user.likedItemKeys ?? []);
+            const dislikedSet = new Set(user.dislikedItemKeys ?? []);
+            const previousPreference: 'liked' | 'disliked' | 'none' =
+              likedSet.has(itemKey)
+                ? 'liked'
+                : dislikedSet.has(itemKey)
+                  ? 'disliked'
+                  : 'none';
 
-    if (preference === 'liked') {
-      likedSet.add(itemKey);
-    } else if (preference === 'disliked') {
-      dislikedSet.add(itemKey);
-    }
+            likedSet.delete(itemKey);
+            dislikedSet.delete(itemKey);
 
-    const likeDelta =
-      (preference === 'liked' ? 1 : 0) -
-      (previousPreference === 'liked' ? 1 : 0);
-    const dislikeDelta =
-      (preference === 'disliked' ? 1 : 0) -
-      (previousPreference === 'disliked' ? 1 : 0);
+            if (preference === 'liked') {
+              likedSet.add(itemKey);
+            } else if (preference === 'disliked') {
+              dislikedSet.add(itemKey);
+            }
 
-    await prisma.$transaction(async (tx) => {
-      await tx.user.update({
-        where: { id: user.id },
-        data: {
-          likedItemKeys: Array.from(likedSet),
-          dislikedItemKeys: Array.from(dislikedSet),
-        },
-      });
+            const likeDelta =
+              (preference === 'liked' ? 1 : 0) -
+              (previousPreference === 'liked' ? 1 : 0);
+            const dislikeDelta =
+              (preference === 'disliked' ? 1 : 0) -
+              (previousPreference === 'disliked' ? 1 : 0);
 
-      // Create item preference count for this item if it doesn't exist
-      await tx.itemPreferenceCounts.upsert({
-        where: { itemKey },
-        create: {
-          itemKey,
-          numLikes: 0,
-          numDislikes: 0,
-        },
-        update: {},
-      });
+            await tx.user.update({
+              where: { id: user.id },
+              data: {
+                likedItemKeys: Array.from(likedSet),
+                dislikedItemKeys: Array.from(dislikedSet),
+              },
+            });
 
-      if (likeDelta !== 0 || dislikeDelta !== 0) {
-        await tx.itemPreferenceCounts.update({
-          where: { itemKey },
-          data: {
-            numLikes: { increment: likeDelta },
-            numDislikes: { increment: dislikeDelta },
+            // Create item preference count for this item if it doesn't exist
+            await tx.itemPreferenceCounts.upsert({
+              where: { itemKey },
+              create: {
+                itemKey,
+                numLikes: 0,
+                numDislikes: 0,
+              },
+              update: {},
+            });
+
+            if (likeDelta !== 0 || dislikeDelta !== 0) {
+              await tx.itemPreferenceCounts.update({
+                where: { itemKey },
+                data: {
+                  numLikes: { increment: likeDelta },
+                  numDislikes: { increment: dislikeDelta },
+                },
+              });
+            }
           },
-        });
+          { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+        );
+        break;
+      } catch (err) {
+        if (
+          isSerializationFailure(err) &&
+          attempt < SERIALIZABLE_TX_MAX_ATTEMPTS - 1
+        ) {
+          continue;
+        }
+        throw err;
       }
-    });
+    }
 
     return res.status(200).json({ message: 'Item preference updated.' });
   } catch (error) {
