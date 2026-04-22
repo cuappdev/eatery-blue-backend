@@ -140,18 +140,18 @@ export const setItemPreference = async (
               },
             });
 
-            // Create item preference count for this item if it doesn't exist
-            await tx.itemPreferenceCounts.upsert({
-              where: { itemKey },
-              create: {
-                itemKey,
-                numLikes: 0,
-                numDislikes: 0,
-              },
-              update: {},
-            });
-
             if (likeDelta !== 0 || dislikeDelta !== 0) {
+              // Create count row if missing
+              await tx.itemPreferenceCounts.upsert({
+                where: { itemKey },
+                create: {
+                  itemKey,
+                  numLikes: 0,
+                  numDislikes: 0,
+                },
+                update: {},
+              });
+              // Apply deltas
               await tx.itemPreferenceCounts.update({
                 where: { itemKey },
                 data: {
