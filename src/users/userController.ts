@@ -18,8 +18,8 @@ export const getMe = async (req: Request, res: Response) => {
       reports: true,
       favoritedEateries: true,
       favoritedItemNames: true,
-      likedItemNames: true,
-      dislikedItemNames: true,
+      likedItemKeys: true,
+      dislikedItemKeys: true,
       userEventVotes: true,
     },
   });
@@ -90,8 +90,8 @@ export const setItemPreference = async (
       return res.status(404).json({ message: 'User not found.' });
     }
 
-    const likedSet = new Set(user.likedItemNames);
-    const dislikedSet = new Set(user.dislikedItemNames);
+    const likedSet = new Set(user.likedItemKeys);
+    const dislikedSet = new Set(user.dislikedItemKeys);
     const previousPreference: 'liked' | 'disliked' | 'none' = likedSet.has(
       itemKey,
     )
@@ -120,8 +120,8 @@ export const setItemPreference = async (
       await tx.user.update({
         where: { id: user.id },
         data: {
-          likedItemNames: Array.from(likedSet),
-          dislikedItemNames: Array.from(dislikedSet),
+          likedItemKeys: Array.from(likedSet),
+          dislikedItemKeys: Array.from(dislikedSet),
         },
       });
 

@@ -1,6 +1,6 @@
 -- AlterTable
-ALTER TABLE "User" ADD COLUMN     "dislikedItemNames" TEXT[],
-ADD COLUMN     "likedItemNames" TEXT[];
+ALTER TABLE "User" ADD COLUMN     "dislikedItemKeys" TEXT[],
+ADD COLUMN     "likedItemKeys" TEXT[];
 
 -- CreateTable
 CREATE TABLE "ItemPreferenceCounts" (
