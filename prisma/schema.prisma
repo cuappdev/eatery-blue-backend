@@ -58,8 +58,8 @@ model User {
   reports            Report[]
   favoritedEateries  FavoritedEatery[]
   favoritedItemNames String[]
-  likedItemKeys      String[] // Each entry uses "<itemName>|<eateryCornellId>"
-  dislikedItemKeys   String[] // Each entry uses "<itemName>|<eateryCornellId>"
+  likedItemKeys      String[] @default([]) // Each entry uses "<itemName>|<eateryCornellId>"
+  dislikedItemKeys   String[] @default([]) // Each entry uses "<itemName>|<eateryCornellId>"
   userEventVotes     UserEventVote[]
 
   // Allows for efficient reverse lookup: find users by favorited item names

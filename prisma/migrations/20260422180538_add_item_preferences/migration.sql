@@ -1,6 +1,6 @@
 -- AlterTable
-ALTER TABLE "User" ADD COLUMN     "dislikedItemKeys" TEXT[],
-ADD COLUMN     "likedItemKeys" TEXT[];
+ALTER TABLE "User" ADD COLUMN     "dislikedItemKeys" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
+ADD COLUMN     "likedItemKeys" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[];
 
 -- CreateTable
 CREATE TABLE "ItemPreferenceCounts" (
