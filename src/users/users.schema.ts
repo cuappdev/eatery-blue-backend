@@ -6,6 +6,14 @@ export const fcmTokenSchema = z.object({
   }),
 });
 
+export const itemPreferenceSchema = z.object({
+  body: z.object({
+    name: z.string().nonempty('Item name is required'),
+    cornellId: z.number().int('cornellId must be an integer'),
+    preference: z.enum(['liked', 'disliked', 'none']),
+  }),
+});
+
 export const favoriteItemSchema = z.object({
   body: z.object({
     name: z.string().nonempty('Item name is required'),

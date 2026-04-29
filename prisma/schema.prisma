@@ -58,9 +58,12 @@ model User {
   reports            Report[]
   favoritedEateries  FavoritedEatery[]
   favoritedItemNames String[]
+  likedItemKeys      String[] @default([]) // Each entry uses "<itemName>|<eateryCornellId>"
+  dislikedItemKeys   String[] @default([]) // Each entry uses "<itemName>|<eateryCornellId>"
   userEventVotes     UserEventVote[]
 
-  @@index(favoritedItemNames, type: Gin) // The performance magic
+  // Allows for efficient reverse lookup: find users by favorited item names
+  @@index([favoritedItemNames], type: Gin)
 }
 
 model FavoritedEatery {
@@ -178,6 +181,12 @@ model Item {
 
   @@index([categoryId])
   @@index([name])
+}
+
+model ItemPreferenceCounts {
+  itemKey     String @id // "<itemName>|<eateryCornellId>"
+  numLikes    Int    @default(0)
+  numDislikes Int    @default(0)
 }
 
 model DietaryPreference {

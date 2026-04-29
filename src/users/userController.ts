@@ -1,9 +1,17 @@
 import type { EventType } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 
 import type { NextFunction, Request, Response } from 'express';
 
 import { prisma } from '../prisma.js';
+import { NotFoundError } from '../utils/AppError.js';
+import { makeItemKey } from '../utils/itemKey.js';
 import { getTodayTimeWindow } from '../utils/time.js';
+
+const SERIALIZABLE_TX_MAX_ATTEMPTS = 5;
+
+const isSerializationFailure = (err: unknown): boolean =>
+  err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2034';
 
 export const getMe = async (req: Request, res: Response) => {
   const { userId } = req.user!;
@@ -17,6 +25,8 @@ export const getMe = async (req: Request, res: Response) => {
       reports: true,
       favoritedEateries: true,
       favoritedItemNames: true,
+      likedItemKeys: true,
+      dislikedItemKeys: true,
       userEventVotes: true,
     },
   });
@@ -62,6 +72,112 @@ export const removeFcmToken = async (
     res.status(200).json({ message: 'Token removed successfully.' });
   } catch (e) {
     res.status(200).json({ message: 'Token removal processed. Error: ' + e });
+  }
+};
+
+export const setItemPreference = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const { name, cornellId, preference } = req.body as {
+      name: string;
+      cornellId: number;
+      preference: 'liked' | 'disliked' | 'none';
+    };
+    const { userId } = req.user!;
+
+    const itemKey = makeItemKey(name, cornellId);
+
+    for (let attempt = 0; attempt < SERIALIZABLE_TX_MAX_ATTEMPTS; attempt++) {
+      try {
+        await prisma.$transaction(
+          async (tx) => {
+            const user = await tx.user.findUnique({
+              where: { id: userId },
+              select: {
+                id: true,
+                likedItemKeys: true,
+                dislikedItemKeys: true,
+              },
+            });
+
+            if (!user) {
+              throw new NotFoundError('User not found.');
+            }
+
+            const likedSet = new Set(user.likedItemKeys ?? []);
+            const dislikedSet = new Set(user.dislikedItemKeys ?? []);
+            const previousPreference: 'liked' | 'disliked' | 'none' =
+              likedSet.has(itemKey)
+                ? 'liked'
+                : dislikedSet.has(itemKey)
+                  ? 'disliked'
+                  : 'none';
+
+            likedSet.delete(itemKey);
+            dislikedSet.delete(itemKey);
+
+            if (preference === 'liked') {
+              likedSet.add(itemKey);
+            } else if (preference === 'disliked') {
+              dislikedSet.add(itemKey);
+            }
+
+            const likeDelta =
+              (preference === 'liked' ? 1 : 0) -
+              (previousPreference === 'liked' ? 1 : 0);
+            const dislikeDelta =
+              (preference === 'disliked' ? 1 : 0) -
+              (previousPreference === 'disliked' ? 1 : 0);
+
+            await tx.user.update({
+              where: { id: user.id },
+              data: {
+                likedItemKeys: Array.from(likedSet),
+                dislikedItemKeys: Array.from(dislikedSet),
+              },
+            });
+
+            if (likeDelta !== 0 || dislikeDelta !== 0) {
+              // Create count row if missing
+              await tx.itemPreferenceCounts.upsert({
+                where: { itemKey },
+                create: {
+                  itemKey,
+                  numLikes: 0,
+                  numDislikes: 0,
+                },
+                update: {},
+              });
+              // Apply deltas
+              await tx.itemPreferenceCounts.update({
+                where: { itemKey },
+                data: {
+                  numLikes: { increment: likeDelta },
+                  numDislikes: { increment: dislikeDelta },
+                },
+              });
+            }
+          },
+          { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+        );
+        break;
+      } catch (err) {
+        if (
+          isSerializationFailure(err) &&
+          attempt < SERIALIZABLE_TX_MAX_ATTEMPTS - 1
+        ) {
+          continue;
+        }
+        throw err;
+      }
+    }
+
+    return res.status(200).json({ message: 'Item preference updated.' });
+  } catch (error) {
+    return next(error);
   }
 };
 
