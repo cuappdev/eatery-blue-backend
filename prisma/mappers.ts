@@ -45,6 +45,7 @@ export function mapPaymentMethod(method: RawPayMethod): PaymentMethod {
     case 'Cornell Card':
       return PaymentMethod.BRB;
     case 'Major Credit Cards':
+    case 'Cash-to-Card':
     case 'Mobile Payments':
       return PaymentMethod.CARD;
     case 'Cash':
