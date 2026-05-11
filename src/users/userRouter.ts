@@ -9,12 +9,14 @@ import {
   removeFavoriteEatery,
   removeFavoriteItem,
   removeFcmToken,
+  setItemPreference,
 } from './userController.js';
 import { getMe } from './userController.js';
 import {
   favoriteEaterySchema,
   favoriteItemSchema,
   fcmTokenSchema,
+  itemPreferenceSchema,
 } from './users.schema.js';
 
 const router = Router();
@@ -22,6 +24,12 @@ const router = Router();
 router.get('/me', getMe);
 router.post('/fcm-token', validateRequest(fcmTokenSchema), addFcmToken);
 router.delete('/fcm-token', validateRequest(fcmTokenSchema), removeFcmToken);
+
+router.post(
+  '/preferences',
+  validateRequest(itemPreferenceSchema),
+  setItemPreference,
+);
 
 router.post(
   '/favorites/items',
