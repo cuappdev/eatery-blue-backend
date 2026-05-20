@@ -385,11 +385,14 @@ async function transformEateriesConcurrently(
   }
 
   if (errors.length > 0) {
-    const errorMessages = errors
-      .map((e) => `Eatery "${e.eatery.name}": ${e.error}`)
-      .join('\n');
-    throw new Error(
-      `Failed to transform ${errors.length} eatery(ies):\n${errorMessages}`,
+    const failureRate = errors.length / rawEateries.length;
+    if (failureRate >= 0.5) {
+      throw new Error(
+        `Aborting: ${errors.length}/${rawEateries.length} API eateries failed to transform (${Math.round(failureRate * 100)}%)`,
+      );
+    }
+    console.warn(
+      `Skipped ${errors.length} API eatery(ies) due to transform errors`,
     );
   }
 
