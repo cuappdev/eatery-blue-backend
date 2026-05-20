@@ -385,11 +385,8 @@ async function transformEateriesConcurrently(
   }
 
   if (errors.length > 0) {
-    const errorMessages = errors
-      .map((e) => `Eatery "${e.eatery.name}": ${e.error}`)
-      .join('\n');
-    throw new Error(
-      `Failed to transform ${errors.length} eatery(ies):\n${errorMessages}`,
+    console.warn(
+      `Skipped ${errors.length} API eatery(ies) due to transform errors`,
     );
   }
 
