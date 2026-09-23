@@ -32,7 +32,8 @@ export function mapCampusArea(area: RawCampusArea): CampusArea {
     case 'South':
       return CampusArea.SOUTH;
     default:
-      throw new Error(`Unknown campus area: ${area.descrshort}`);
+      console.warn(`Unknown campus area: ${area.descrshort}, defaulting to CENTRAL`);
+      return CampusArea.CENTRAL;
   }
 }
 
@@ -53,7 +54,8 @@ export function mapPaymentMethod(method: RawPayMethod): PaymentMethod {
     case 'Free':
       return PaymentMethod.FREE;
     default:
-      throw new Error(`Unknown payment method: ${method.descrshort}`);
+      console.warn(`Unknown payment method: ${method.descrshort}, defaulting to CARD`);
+      return PaymentMethod.CARD;
   }
 }
 
@@ -75,7 +77,8 @@ export function mapEateryType(type: RawEateryType): EateryType {
     case 'General':
       return EateryType.GENERAL;
     default:
-      throw new Error(`Unknown eatery type: ${type.descr}`);
+      console.warn(`Unknown eatery type: ${type.descr}, defaulting to GENERAL`);
+      return EateryType.GENERAL;
   }
 }
 
@@ -107,7 +110,8 @@ export function mapEventType(eventDescription: string): EventType {
     case 'Free Food':
       return EventType.GENERAL;
     default:
-      throw new Error(`Unknown event type: ${eventDescription}`);
+      console.warn(`Unknown event type: ${eventDescription}, defaulting to GENERAL`);
+      return EventType.GENERAL;
   }
 }
 
