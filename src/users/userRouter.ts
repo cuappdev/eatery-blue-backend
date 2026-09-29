@@ -5,7 +5,10 @@ import {
   addFavoriteEatery,
   addFavoriteItem,
   addFcmToken,
+  deleteNotifications,
   getFavoriteMatches,
+  getNotifications,
+  markNotificationsRead,
   removeFavoriteEatery,
   removeFavoriteItem,
   removeFcmToken,
@@ -17,6 +20,7 @@ import {
   favoriteItemSchema,
   fcmTokenSchema,
   itemPreferenceSchema,
+  notificationIdsSchema,
 } from './users.schema.js';
 
 const router = Router();
@@ -53,5 +57,17 @@ router.delete(
   removeFavoriteEatery,
 );
 router.get('/favorites/matches', getFavoriteMatches);
+
+router.get('/notifications', getNotifications);
+router.patch(
+  '/notifications/read',
+  validateRequest(notificationIdsSchema),
+  markNotificationsRead,
+);
+router.delete(
+  '/notifications',
+  validateRequest(notificationIdsSchema),
+  deleteNotifications,
+);
 
 export default router;

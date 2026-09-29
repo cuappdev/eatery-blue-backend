@@ -61,6 +61,7 @@ model User {
   likedItemKeys      String[] @default([]) // Each entry uses "<itemName>|<eateryCornellId>"
   dislikedItemKeys   String[] @default([]) // Each entry uses "<itemName>|<eateryCornellId>"
   userEventVotes     UserEventVote[]
+  notifications      Notification[]
 
   // Allows for efficient reverse lookup: find users by favorited item names
   @@index([favoritedItemNames], type: Gin)
@@ -83,6 +84,20 @@ model FCMToken {
   userId Int
 
   @@index([userId])
+}
+
+// Notification hub entries, different than FCM push delivery
+model Notification {
+  id        Int      @id @default(autoincrement())
+  title     String
+  body      String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId Int
+
+  @@index([userId, createdAt])
 }
 
 model Report {

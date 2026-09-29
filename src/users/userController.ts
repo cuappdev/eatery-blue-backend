@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 
 import type { NextFunction, Request, Response } from 'express';
 
+import { NOTIFICATION_HUB_WINDOW_HOURS } from '../constants.js';
 import { prisma } from '../prisma.js';
 import { NotFoundError } from '../utils/AppError.js';
 import { makeItemKey } from '../utils/itemKey.js';
@@ -424,6 +425,106 @@ export const getFavoriteMatches = async (
     }
 
     res.json(matches);
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * Gets all of the user's notifications from the last
+ * NOTIFICATION_HUB_WINDOW_HOURS, most recent first.
+ */
+export const getNotifications = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const { userId } = req.user!;
+    const since = new Date(
+      Date.now() - NOTIFICATION_HUB_WINDOW_HOURS * 60 * 60 * 1000,
+    );
+
+    const notifications = await prisma.notification.findMany({
+      where: { userId, createdAt: { gte: since } },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      select: {
+        id: true,
+        title: true,
+        body: true,
+        isRead: true,
+        createdAt: true,
+      },
+    });
+
+    return res.json({ notifications });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * Applies `operation` to the user's notifications with the given ids.
+ * If any id doesn't exist or belongs to another user,
+ * the transaction is rolled back and a NotFoundError is thrown.
+ */
+const applyToOwnedNotifications = async (
+  userId: number,
+  ids: number[],
+  operation: (
+    tx: Prisma.TransactionClient,
+    where: Prisma.NotificationWhereInput,
+  ) => Promise<Prisma.BatchPayload>,
+) => {
+  const uniqueIds = Array.from(new Set(ids));
+
+  await prisma.$transaction(async (tx) => {
+    const { count } = await operation(tx, {
+      id: { in: uniqueIds },
+      userId,
+    });
+
+    if (count !== uniqueIds.length) {
+      throw new NotFoundError(
+        'One or more notifications were not found for this user.',
+      );
+    }
+  });
+};
+
+export const markNotificationsRead = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const { ids } = req.body as { ids: number[] };
+    const { userId } = req.user!;
+
+    await applyToOwnedNotifications(userId, ids, (tx, where) =>
+      tx.notification.updateMany({ where, data: { isRead: true } }),
+    );
+
+    return res.status(200).json({ message: 'Notifications marked as read.' });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const deleteNotifications = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const { ids } = req.body as { ids: number[] };
+    const { userId } = req.user!;
+
+    await applyToOwnedNotifications(userId, ids, (tx, where) =>
+      tx.notification.deleteMany({ where }),
+    );
+
+    return res.status(200).json({ message: 'Notifications deleted.' });
   } catch (error) {
     return next(error);
   }

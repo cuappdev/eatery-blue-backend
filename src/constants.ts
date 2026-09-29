@@ -6,6 +6,14 @@ export const DEFAULT_IMAGE_URL =
 
 /** How many hours ahead to look for events when sending notifications */
 export const NOTIFICATION_LOOKAHEAD_HOURS = 7;
+
+/**
+ * How long a notification stays in the notification hub. The API only returns
+ * notifications created within this many hours ago, and the notification job
+ * prunes notifications that are older than it.
+ */
+export const NOTIFICATION_HUB_WINDOW_HOURS = 24;
+
 export const ITUNES_LOOKUP_URL =
   'https://itunes.apple.com/lookup?bundleId=org.cuappdev.eatery';
 
