@@ -28,6 +28,18 @@ export const notificationIdsSchema = z.object({
   }),
 });
 
+export const updateSettingsSchema = z.object({
+  body: z
+    .strictObject({
+      favoriteItemPushNotifications: z.boolean().optional(),
+      cornellAppdevPushNotifications: z.boolean().optional(),
+    })
+    .refine(
+      (body) => Object.keys(body).length > 0,
+      'At least one setting is required',
+    ),
+});
+
 export const favoriteEaterySchema = z.object({
   body: z.object({
     cornellId: z.number().int('cornellId must be an integer'),

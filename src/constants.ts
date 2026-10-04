@@ -14,6 +14,15 @@ export const NOTIFICATION_LOOKAHEAD_HOURS = 7;
  */
 export const NOTIFICATION_HUB_WINDOW_HOURS = 24;
 
+/**
+ * Settings returned when a user has no UserSettings row. Must be kept in sync
+ * with the @default values on UserSettings in schema.prisma by the programmer.
+ */
+export const DEFAULT_SETTINGS = {
+  favoriteItemPushNotifications: true,
+  cornellAppdevPushNotifications: true,
+};
+
 export const ITUNES_LOOKUP_URL =
   'https://itunes.apple.com/lookup?bundleId=org.cuappdev.eatery';
 

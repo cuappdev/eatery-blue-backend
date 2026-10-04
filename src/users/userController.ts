@@ -3,7 +3,10 @@ import { Prisma } from '@prisma/client';
 
 import type { NextFunction, Request, Response } from 'express';
 
-import { NOTIFICATION_HUB_WINDOW_HOURS } from '../constants.js';
+import {
+  DEFAULT_SETTINGS,
+  NOTIFICATION_HUB_WINDOW_HOURS,
+} from '../constants.js';
 import { prisma } from '../prisma.js';
 import { NotFoundError } from '../utils/AppError.js';
 import { makeItemKey } from '../utils/itemKey.js';
@@ -13,6 +16,12 @@ const SERIALIZABLE_TX_MAX_ATTEMPTS = 5;
 
 const isSerializationFailure = (err: unknown): boolean =>
   err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2034';
+
+// Settings to select from UserSettings. Different than default setting values
+const SETTINGS_SELECT = {
+  favoriteItemPushNotifications: true,
+  cornellAppdevPushNotifications: true,
+} satisfies Prisma.UserSettingsSelect;
 
 export const getMe = async (req: Request, res: Response) => {
   const { userId } = req.user!;
@@ -29,10 +38,13 @@ export const getMe = async (req: Request, res: Response) => {
       likedItemKeys: true,
       dislikedItemKeys: true,
       userEventVotes: true,
+      settings: { select: SETTINGS_SELECT },
     },
   });
 
-  return res.json({ user });
+  return res.json({
+    user: user && { ...user, settings: user.settings ?? DEFAULT_SETTINGS },
+  });
 };
 
 /**
@@ -525,6 +537,54 @@ export const deleteNotifications = async (
     );
 
     return res.status(200).json({ message: 'Notifications deleted.' });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * Gets the user's settings. Users who never changed a setting have no
+ * UserSettings row and thus get the default settings.
+ */
+export const getSettings = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const { userId } = req.user!;
+
+    const settings = await prisma.userSettings.findUnique({
+      where: { userId },
+      select: SETTINGS_SELECT,
+    });
+
+    return res.json(settings ?? DEFAULT_SETTINGS);
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * Updates the supplied settings and returns the updated full settings
+ * object.
+ */
+export const updateSettings = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const { userId } = req.user!;
+
+    const settings = await prisma.userSettings.upsert({
+      where: { userId },
+      create: { userId, ...req.body },
+      update: req.body,
+      select: SETTINGS_SELECT,
+    });
+
+    return res.json(settings);
   } catch (error) {
     return next(error);
   }

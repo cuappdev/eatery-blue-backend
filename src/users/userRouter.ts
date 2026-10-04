@@ -8,11 +8,13 @@ import {
   deleteNotifications,
   getFavoriteMatches,
   getNotifications,
+  getSettings,
   markNotificationsRead,
   removeFavoriteEatery,
   removeFavoriteItem,
   removeFcmToken,
   setItemPreference,
+  updateSettings,
 } from './userController.js';
 import { getMe } from './userController.js';
 import {
@@ -21,6 +23,7 @@ import {
   fcmTokenSchema,
   itemPreferenceSchema,
   notificationIdsSchema,
+  updateSettingsSchema,
 } from './users.schema.js';
 
 const router = Router();
@@ -68,6 +71,13 @@ router.delete(
   '/notifications',
   validateRequest(notificationIdsSchema),
   deleteNotifications,
+);
+
+router.get('/settings', getSettings);
+router.patch(
+  '/settings',
+  validateRequest(updateSettingsSchema),
+  updateSettings,
 );
 
 export default router;
