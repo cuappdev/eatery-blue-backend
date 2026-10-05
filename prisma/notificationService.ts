@@ -1,6 +1,9 @@
 import cron from 'node-cron';
 
-import { NOTIFICATION_HUB_WINDOW_HOURS } from '../src/constants.js';
+import {
+  DEFAULT_SETTINGS,
+  NOTIFICATION_HUB_WINDOW_HOURS,
+} from '../src/constants.js';
 import { prisma } from '../src/prisma.js';
 import { sendToTokens } from '../src/utils/notifications.js';
 import { getQueryTimeWindow } from '../src/utils/time.js';
@@ -105,10 +108,12 @@ export async function main() {
       favoritedItemNames: {
         hasSome: Array.from(allItemNamesToday),
       },
-      // Users without FCM tokens still get a notification hub entry
+      // Not filtering by favoriteItemPushNotifications here:
+      // users with push notifications off still get notification hub entries
     },
     include: {
       fcmTokens: true,
+      settings: true,
     },
   });
 
@@ -124,6 +129,7 @@ export async function main() {
     title: string;
     body: string;
     data: { [key: string]: string };
+    pushEnabled: boolean;
   }[] = [];
 
   for (const user of usersToNotify) {
@@ -142,6 +148,10 @@ export async function main() {
     if (userMatchesByEatery.size > 0) {
       const { title, body } = buildMessage(userMatchesByEatery);
       const tokens = user.fcmTokens.map((t) => t.token);
+      // No settings row means defaults (push on)
+      const pushEnabled =
+        user.settings?.favoriteItemPushNotifications ??
+        DEFAULT_SETTINGS.favoriteItemPushNotifications;
 
       pending.push({
         userId: user.id,
@@ -151,6 +161,7 @@ export async function main() {
         data: {
           matches: JSON.stringify(Object.fromEntries(userMatchesByEatery)),
         },
+        pushEnabled,
       });
     }
   }
@@ -165,9 +176,9 @@ export async function main() {
     data: pending.map(({ userId, title, body }) => ({ userId, title, body })),
   });
 
-  // Send push notifications. Users without FCM tokens are skipped
-  for (const { userId, tokens, title, body, data } of pending) {
-    if (tokens.length === 0) {
+  // Send push only when favoriteItemPushNotifications is enabled
+  for (const { userId, tokens, title, body, data, pushEnabled } of pending) {
+    if (!pushEnabled) {
       continue;
     }
     try {
