@@ -44,12 +44,14 @@ type CbordTransaction = {
 async function cbordRequest<T>(
   url: string,
   payload: object,
+  timeoutMs?: number,
 ): Promise<CbordResponse<T>> {
   try {
     const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
+      signal: timeoutMs ? AbortSignal.timeout(timeoutMs) : undefined,
     });
 
     if (!response.ok) {
@@ -178,7 +180,11 @@ async function retrieveUserId(sessionId: string): Promise<string> {
     },
   };
 
-  const result = await cbordRequest<{ id: string }>(CBORD_USER_URL, payload);
+  const result = await cbordRequest<{ id: string }>(
+    CBORD_USER_URL,
+    payload,
+    FALLBACK_TIMEOUT_MS,
+  );
   handleCbordException(result);
 
   return result.response!.id;
@@ -200,7 +206,7 @@ async function retrieveAccountsByUser(sessionId: string, userId: string) {
   const result = await cbordRequest<{
     accounts: CbordAccount[];
     planName: string | null;
-  }>(CBORD_COMMERCE_URL, payload);
+  }>(CBORD_COMMERCE_URL, payload, FALLBACK_TIMEOUT_MS);
   handleCbordException(result);
 
   return {
@@ -299,6 +305,9 @@ async function retrieveAccounts(sessionId: string) {
 /** CBORD `accountType` for meal plan (swipe) accounts. */
 const MEAL_PLAN_ACCOUNT_TYPE = 1;
 
+/** Max time to wait for each CBORD request in the meal swipes fallback. */
+const FALLBACK_TIMEOUT_MS = 5000;
+
 export type MealSwipes = {
   name: string;
   plan: MealPlanType;
@@ -368,6 +377,7 @@ const MEAL_PLAN_KEYWORDS: [keyword: string, plan: MealPlanType][] = [
   ['choice', 'weekly'],
   ['basic', 'weekly'],
   ['collegetown', 'weekly'],
+  ['south campus', 'weekly'],
   ['off campus', 'semester'],
   ['flex', 'semester'],
   ['supplemental', 'semester'],
