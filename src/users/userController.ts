@@ -211,15 +211,16 @@ export const addFavoriteItem = async (
       return res.status(404).json({ message: 'User not found.' });
     }
 
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        // Add to the array if it doesn't already exist
-        favoritedItemNames: {
-          push: name,
+    if (!user.favoritedItemNames.includes(name)) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          favoritedItemNames: {
+            push: name,
+          },
         },
-      },
-    });
+      });
+    }
 
     res.status(200).json({ message: 'Favorite item added.' });
   } catch (error) {
