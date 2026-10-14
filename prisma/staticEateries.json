@@ -410,13 +410,13 @@
       "about": "",
       "cornellDining": false,
       "contactPhone": "1-607-227-5391",
-      "latitude": 42.444958,
-      "longitude": -76.481169,
+      "latitude": 42.4450,
+      "longitude": -76.4811,
       "campusArea": {
         "descr": "Central Campus",
         "descrshort": "Central"
       },
-      "location": "Gates Hall",
+      "location": "Computing and Information Science Building",
       "eateryTypes": [
         {
           "descr": "Cafe",
