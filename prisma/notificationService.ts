@@ -128,7 +128,6 @@ export async function main() {
     tokens: string[];
     title: string;
     body: string;
-    data: { [key: string]: string };
     pushEnabled: boolean;
   }[] = [];
 
@@ -158,9 +157,6 @@ export async function main() {
         tokens,
         title,
         body,
-        data: {
-          matches: JSON.stringify(Object.fromEntries(userMatchesByEatery)),
-        },
         pushEnabled,
       });
     }
@@ -177,12 +173,12 @@ export async function main() {
   });
 
   // Send push only when favoriteItemPushNotifications is enabled
-  for (const { userId, tokens, title, body, data, pushEnabled } of pending) {
+  for (const { userId, tokens, title, body, pushEnabled } of pending) {
     if (!pushEnabled) {
       continue;
     }
     try {
-      await sendToTokens(tokens, title, body, data);
+      await sendToTokens(tokens, title, body);
     } catch (e) {
       console.error(`Failed to send notification for user ${userId}:`, e);
     }
