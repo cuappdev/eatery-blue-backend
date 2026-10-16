@@ -23,7 +23,7 @@ export async function sendToTokens(
       title: title,
       body: body,
     },
-    data: data,
+    ...(Object.keys(data).length > 0 ? { data } : {}),
     apns: {
       payload: {
         aps: {

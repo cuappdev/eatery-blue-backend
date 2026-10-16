@@ -1,12 +1,17 @@
 import cron from 'node-cron';
 
+import {
+  DEFAULT_SETTINGS,
+  NOTIFICATION_HUB_WINDOW_HOURS,
+} from '../src/constants.js';
 import { prisma } from '../src/prisma.js';
 import { sendToTokens } from '../src/utils/notifications.js';
 import { getQueryTimeWindow } from '../src/utils/time.js';
 
-function buildMessage(
-  matchesByEatery: Map<string, string[]>,
-): { title: string; body: string } {
+function buildMessage(matchesByEatery: Map<string, string[]>): {
+  title: string;
+  body: string;
+} {
   const title = 'Some of your favorites are being served today!';
   const eateryNames = Array.from(matchesByEatery.keys());
 
@@ -14,7 +19,10 @@ function buildMessage(
     const eateryName = eateryNames[0];
     const items = matchesByEatery.get(eateryName)!;
     if (items.length === 1) {
-      return { title, body: `${items[0]} is being served at ${eateryName} today.` };
+      return {
+        title,
+        body: `${items[0]} is being served at ${eateryName} today.`,
+      };
     } else if (items.length === 2) {
       return {
         title,
@@ -32,7 +40,23 @@ function buildMessage(
   }
 }
 
+async function pruneOldNotifications() {
+  const cutoff = new Date(
+    Date.now() - NOTIFICATION_HUB_WINDOW_HOURS * 60 * 60 * 1000,
+  );
+  try {
+    const { count } = await prisma.notification.deleteMany({
+      where: { createdAt: { lt: cutoff } },
+    });
+    console.log(`Pruned ${count} old notifications.`);
+  } catch (e) {
+    console.error('Error pruning old notifications:', e);
+  }
+}
+
 export async function main() {
+  await pruneOldNotifications();
+
   const { windowStartUnix, windowEndUnix } = getQueryTimeWindow();
 
   // build a map of { eateryName: Set<itemName> }
@@ -77,19 +101,19 @@ export async function main() {
     return;
   }
 
-  // Get all users with at least one favorite 
+  // Get all users with at least one favorite
   // item being served today (using the GIN index).
   const usersToNotify = await prisma.user.findMany({
     where: {
       favoritedItemNames: {
         hasSome: Array.from(allItemNamesToday),
       },
-      fcmTokens: {
-        some: {},
-      },
+      // Not filtering by favoriteItemPushNotifications here:
+      // users with push notifications off still get notification hub entries
     },
     include: {
       fcmTokens: true,
+      settings: true,
     },
   });
 
@@ -98,7 +122,15 @@ export async function main() {
     return;
   }
 
-  // Loop through filtered users and build their aggregated notification
+  // Build each user's aggregated notification
+  const pending: {
+    userId: number;
+    tokens: string[];
+    title: string;
+    body: string;
+    pushEnabled: boolean;
+  }[] = [];
+
   for (const user of usersToNotify) {
     const userFavorites = new Set(user.favoritedItemNames);
     const userMatchesByEatery = new Map<string, string[]>();
@@ -115,16 +147,40 @@ export async function main() {
     if (userMatchesByEatery.size > 0) {
       const { title, body } = buildMessage(userMatchesByEatery);
       const tokens = user.fcmTokens.map((t) => t.token);
+      // No settings row means defaults (push on)
+      const pushEnabled =
+        user.settings?.favoriteItemPushNotifications ??
+        DEFAULT_SETTINGS.favoriteItemPushNotifications;
 
-      const dataPayload = {
-        matches: JSON.stringify(Object.fromEntries(userMatchesByEatery)),
-      };
+      pending.push({
+        userId: user.id,
+        tokens,
+        title,
+        body,
+        pushEnabled,
+      });
+    }
+  }
 
-      try {
-        await sendToTokens(tokens, title, body, dataPayload);
-      } catch (e) {
-        console.error(`Failed to send notification for user ${user.id}:`, e);
-      }
+  if (pending.length === 0) {
+    console.log('No users to notify');
+    return;
+  }
+
+  // Save notifications to the database for the notification hub
+  await prisma.notification.createMany({
+    data: pending.map(({ userId, title, body }) => ({ userId, title, body })),
+  });
+
+  // Send push only when favoriteItemPushNotifications is enabled
+  for (const { userId, tokens, title, body, pushEnabled } of pending) {
+    if (!pushEnabled) {
+      continue;
+    }
+    try {
+      await sendToTokens(tokens, title, body);
+    } catch (e) {
+      console.error(`Failed to send notification for user ${userId}:`, e);
     }
   }
 }
@@ -165,16 +221,17 @@ export function startNotificationScheduler() {
   return task;
 }
 
-
 if (process.env.SCHEDULED_MODE === 'true') {
   startNotificationScheduler();
-  console.log('[Notifications] Notification scheduler is running. Press Ctrl+C to stop.');
+  console.log(
+    '[Notifications] Notification scheduler is running. Press Ctrl+C to stop.',
+  );
   const gracefulShutdown = async () => {
     console.log('[Notifications] Shutting down gracefully...');
     await prisma.$disconnect();
     process.exit(0);
   };
-  
+
   process.on('SIGTERM', gracefulShutdown);
   process.on('SIGINT', gracefulShutdown);
 } else {
