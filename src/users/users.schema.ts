@@ -20,6 +20,26 @@ export const favoriteItemSchema = z.object({
   }),
 });
 
+export const notificationIdsSchema = z.object({
+  body: z.object({
+    ids: z
+      .array(z.number().int('Notification ids must be integers').positive())
+      .nonempty('At least one notification id is required'),
+  }),
+});
+
+export const updateSettingsSchema = z.object({
+  body: z
+    .strictObject({
+      favoriteItemPushNotifications: z.boolean().optional(),
+      cornellAppdevPushNotifications: z.boolean().optional(),
+    })
+    .refine(
+      (body) => Object.keys(body).length > 0,
+      'At least one setting is required',
+    ),
+});
+
 export const favoriteEaterySchema = z.object({
   body: z.object({
     cornellId: z.number().int('cornellId must be an integer'),

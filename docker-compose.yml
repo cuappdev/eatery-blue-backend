@@ -26,5 +26,15 @@ services:
       ['sh', '-c', 'npx prisma migrate deploy && npm run scrape:scheduled']
     restart: unless-stopped
 
+  notifications:
+    image: cornellappdev/eatery-prod:${IMAGE_TAG}
+    env_file: .env
+    volumes:
+      - ./firebase-service-account.json:/app/firebase-service-account.json
+    networks:
+      - eatery-network
+    command: ['npm', 'run', 'notifications:scheduled']
+    restart: unless-stopped
+
 networks:
   eatery-network:
