@@ -1,44 +1,88 @@
+import { formatInTimeZone } from 'date-fns-tz';
 import cron from 'node-cron';
 
 import {
   DEFAULT_SETTINGS,
+  NOTIFICATION_CRON_SCHEDULE,
   NOTIFICATION_HUB_WINDOW_HOURS,
+  TimeZone,
 } from '../src/constants.js';
 import { prisma } from '../src/prisma.js';
 import { sendToTokens } from '../src/utils/notifications.js';
-import { getQueryTimeWindow } from '../src/utils/time.js';
+import { getNotificationSlot } from '../src/utils/time.js';
 
-function buildMessage(matchesByEatery: Map<string, string[]>): {
-  title: string;
-  body: string;
-} {
-  const title = 'Some of your favorites are being served today!';
-  const eateryNames = Array.from(matchesByEatery.keys());
+const PUSH_NOTIFICATION_TITLE = 'Eatery';
+const HUB_NOTIFICATION_TITLE = '';
 
-  if (eateryNames.length === 1) {
-    const eateryName = eateryNames[0];
-    const items = matchesByEatery.get(eateryName)!;
-    if (items.length === 1) {
-      return {
-        title,
-        body: `${items[0]} is being served at ${eateryName} today.`,
-      };
-    } else if (items.length === 2) {
-      return {
-        title,
-        body: `${items[0]} and ${items[1]} are at ${eateryName} today.`,
-      };
-    } else {
-      return { title, body: `Several favorites are at ${eateryName} today.` };
-    }
-  } else {
-    const eateryListStr = eateryNames.join(', ');
-    return {
-      title,
-      body: `Favorites found at ${eateryListStr} today. Check the app for details!`,
-    };
+function formatPlaces(places: string[]): string {
+  if (places.length <= 1) {
+    return places[0] ?? '';
   }
+  if (places.length === 2) {
+    return `${places[0]} and ${places[1]}`;
+  }
+  if (places.length === 3) {
+    return `${places[0]}, ${places[1]}, and ${places[2]}`;
+  }
+  return `${places[0]} and ${places.length - 1} others`;
 }
+
+function formatAlertBody(
+  food: string,
+  places: string[],
+  servedMinute: Date,
+): string {
+  const time = formatInTimeZone(servedMinute, TimeZone.EASTERN, 'h:mm a');
+  return `${food} is being served at ${formatPlaces(places)} at ${time}!`;
+}
+
+/**
+ * Returns a map keyed by item name. The value is the notification body for that
+ * item, listing each eatery that serves it during this minute once.
+ */
+function buildFoodAlerts(
+  events: {
+    eatery: { name: string };
+    menu: { items: { name: string }[] }[];
+  }[],
+  servedMinute: Date,
+): Map<string, string> {
+  const placesByItem = new Map<string, string[]>();
+  const seenPlaces = new Map<string, Set<string>>();
+
+  for (const event of events) {
+    const place = event.eatery.name;
+    for (const category of event.menu) {
+      for (const item of category.items) {
+        let places = placesByItem.get(item.name);
+        let seen = seenPlaces.get(item.name);
+        if (!places || !seen) {
+          places = [];
+          seen = new Set();
+          placesByItem.set(item.name, places);
+          seenPlaces.set(item.name, seen);
+        }
+        if (!seen.has(place)) {
+          seen.add(place);
+          places.push(place);
+        }
+      }
+    }
+  }
+
+  const alerts = new Map<string, string>();
+  for (const [itemName, places] of placesByItem) {
+    alerts.set(itemName, formatAlertBody(itemName, places, servedMinute));
+  }
+  return alerts;
+}
+
+type PendingAlert = {
+  userId: number;
+  body: string;
+  tokens: string[];
+  pushEnabled: boolean;
+};
 
 async function pruneOldNotifications() {
   const cutoff = new Date(
@@ -54,133 +98,99 @@ async function pruneOldNotifications() {
   }
 }
 
-export async function main() {
-  await pruneOldNotifications();
+function pendingAlertsForUsers(
+  users: {
+    id: number;
+    favoritedItemNames: string[];
+    fcmTokens: { token: string }[];
+    settings: { favoriteItemPushNotifications: boolean } | null;
+  }[],
+  foods: Map<string, string>,
+): PendingAlert[] {
+  const pending: PendingAlert[] = [];
 
-  const { windowStartUnix, windowEndUnix } = getQueryTimeWindow();
+  for (const user of users) {
+    const pushEnabled =
+      user.settings?.favoriteItemPushNotifications ??
+      DEFAULT_SETTINGS.favoriteItemPushNotifications;
+    const tokens = user.fcmTokens.map((token) => token.token);
+    const seen = new Set<string>();
 
-  // build a map of { eateryName: Set<itemName> }
-  const eateryMenuMap = new Map<string, Set<string>>();
-  const allItemNamesToday = new Set<string>();
-
-  const eateries = await prisma.eatery.findMany({
-    include: {
-      events: {
-        where: {
-          startTimestamp: { lte: new Date(windowEndUnix * 1000) },
-          endTimestamp: { gte: new Date(windowStartUnix * 1000) },
-        },
-        include: {
-          menu: {
-            include: {
-              items: true,
-            },
-          },
-        },
-      },
-    },
-  });
-
-  for (const eatery of eateries) {
-    if (!eateryMenuMap.has(eatery.name)) {
-      eateryMenuMap.set(eatery.name, new Set<string>());
-    }
-    const itemSet = eateryMenuMap.get(eatery.name)!;
-    for (const event of eatery.events) {
-      for (const category of event.menu) {
-        for (const item of category.items) {
-          itemSet.add(item.name);
-          allItemNamesToday.add(item.name);
-        }
+    for (const name of user.favoritedItemNames) {
+      if (seen.has(name)) {
+        continue;
       }
-    }
-  }
-
-  if (allItemNamesToday.size === 0) {
-    console.log('No items found');
-    return;
-  }
-
-  // Get all users with at least one favorite
-  // item being served today (using the GIN index).
-  const usersToNotify = await prisma.user.findMany({
-    where: {
-      favoritedItemNames: {
-        hasSome: Array.from(allItemNamesToday),
-      },
-      // Not filtering by favoriteItemPushNotifications here:
-      // users with push notifications off still get notification hub entries
-    },
-    include: {
-      fcmTokens: true,
-      settings: true,
-    },
-  });
-
-  if (usersToNotify.length === 0) {
-    console.log('No users to notify');
-    return;
-  }
-
-  // Build each user's aggregated notification
-  const pending: {
-    userId: number;
-    tokens: string[];
-    title: string;
-    body: string;
-    pushEnabled: boolean;
-  }[] = [];
-
-  for (const user of usersToNotify) {
-    const userFavorites = new Set(user.favoritedItemNames);
-    const userMatchesByEatery = new Map<string, string[]>();
-
-    for (const [eateryName, itemSet] of eateryMenuMap.entries()) {
-      const matches = Array.from(itemSet).filter((itemName) =>
-        userFavorites.has(itemName),
-      );
-      if (matches.length > 0) {
-        userMatchesByEatery.set(eateryName, matches.sort());
+      const body = foods.get(name);
+      if (!body) {
+        continue;
       }
-    }
-
-    if (userMatchesByEatery.size > 0) {
-      const { title, body } = buildMessage(userMatchesByEatery);
-      const tokens = user.fcmTokens.map((t) => t.token);
-      // No settings row means defaults (push on)
-      const pushEnabled =
-        user.settings?.favoriteItemPushNotifications ??
-        DEFAULT_SETTINGS.favoriteItemPushNotifications;
-
+      seen.add(name);
       pending.push({
         userId: user.id,
-        tokens,
-        title,
         body,
+        tokens,
         pushEnabled,
       });
     }
   }
 
-  if (pending.length === 0) {
-    console.log('No users to notify');
+  return pending;
+}
+
+export async function main() {
+  await pruneOldNotifications();
+
+  const servedMinute = getNotificationSlot();
+
+  const events = await prisma.event.findMany({
+    where: {
+      startTimestamp: servedMinute,
+    },
+    select: {
+      eatery: { select: { name: true } },
+      menu: { select: { items: { select: { name: true } } } },
+    },
+  });
+
+  const foods = buildFoodAlerts(events, servedMinute);
+  const itemNames = Array.from(foods.keys());
+
+  if (itemNames.length === 0) {
     return;
   }
 
-  // Save notifications to the database for the notification hub
-  await prisma.notification.createMany({
-    data: pending.map(({ userId, title, body }) => ({ userId, title, body })),
+  const users = await prisma.user.findMany({
+    where: {
+      favoritedItemNames: { hasSome: itemNames },
+    },
+    select: {
+      id: true,
+      favoritedItemNames: true,
+      fcmTokens: { select: { token: true } },
+      settings: { select: { favoriteItemPushNotifications: true } },
+    },
   });
 
-  // Send push only when favoriteItemPushNotifications is enabled
-  for (const { userId, tokens, title, body, pushEnabled } of pending) {
-    if (!pushEnabled) {
+  const pending = pendingAlertsForUsers(users, foods);
+
+  if (pending.length > 0) {
+    await prisma.notification.createMany({
+      data: pending.map((alert) => ({
+        userId: alert.userId,
+        title: HUB_NOTIFICATION_TITLE,
+        body: alert.body,
+      })),
+    });
+  }
+
+  for (const alert of pending) {
+    if (!alert.pushEnabled) {
       continue;
     }
     try {
-      await sendToTokens(tokens, title, body);
+      await sendToTokens(alert.tokens, PUSH_NOTIFICATION_TITLE, alert.body);
     } catch (e) {
-      console.error(`Failed to send notification for user ${userId}:`, e);
+      console.error(`Failed to send notification for user ${alert.userId}:`, e);
     }
   }
 }
@@ -207,13 +217,14 @@ async function runNotificationsSafely() {
 }
 
 export function startNotificationScheduler() {
-  const cronExpression = process.env.NOTI_CRON_SCHEDULE || '0 8,17 * * *';
+  const cronExpression =
+    process.env.NOTI_CRON_SCHEDULE || NOTIFICATION_CRON_SCHEDULE;
 
   console.log('[Notifications] Initializing scheduler...');
   console.log(`[Notifications] Schedule: ${cronExpression}`);
 
   const task = cron.schedule(cronExpression, runNotificationsSafely, {
-    timezone: 'America/New_York',
+    timezone: TimeZone.EASTERN,
   });
 
   console.log('[Notifications] Scheduler started.');
@@ -237,7 +248,7 @@ if (process.env.SCHEDULED_MODE === 'true') {
 } else {
   main()
     .catch((e) => {
-      console.error('Error during scraping:', e);
+      console.error('Error during notifications:', e);
       process.exit(1);
     })
     .finally(async () => {

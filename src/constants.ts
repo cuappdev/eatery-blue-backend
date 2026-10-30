@@ -4,8 +4,11 @@ export const EATERY_IMAGES_BASE_URL =
 export const DEFAULT_IMAGE_URL =
   'https://images-prod.healthline.com/hlcmsresource/images/AN_images/health-benefits-of-apples-1296x728-feature.jpg';
 
-/** How many hours ahead to look for events when sending notifications */
-export const NOTIFICATION_LOOKAHEAD_HOURS = 7;
+/** How many minutes before an event start to send a favorite-item alert. */
+export const NOTIFICATION_LEAD_MINUTES = 30;
+
+/** Default schedule for the notification job. */
+export const NOTIFICATION_CRON_SCHEDULE = '0,15,30,45 * * * *';
 
 /**
  * How long a notification stays in the notification hub. The API only returns
