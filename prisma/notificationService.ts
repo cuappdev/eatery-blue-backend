@@ -33,7 +33,7 @@ function formatAlertBody(
   servedMinute: Date,
 ): string {
   const time = formatInTimeZone(servedMinute, TimeZone.EASTERN, 'h:mm a');
-  return `${food} is being served at ${formatPlaces(places)} at ${time}!`;
+  return `**${food}** is being served at ${formatPlaces(places)} at ${time}!`;
 }
 
 /**
@@ -188,7 +188,11 @@ export async function main() {
       continue;
     }
     try {
-      await sendToTokens(alert.tokens, PUSH_NOTIFICATION_TITLE, alert.body);
+      await sendToTokens(
+        alert.tokens,
+        PUSH_NOTIFICATION_TITLE,
+        alert.body.replaceAll('**', ''),
+      );
     } catch (e) {
       console.error(`Failed to send notification for user ${alert.userId}:`, e);
     }
