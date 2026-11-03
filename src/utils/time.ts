@@ -1,6 +1,7 @@
-import { addHours, endOfDay, getUnixTime, startOfDay } from 'date-fns';
+import { addMinutes, endOfDay, startOfDay } from 'date-fns';
+import { formatInTimeZone, fromZonedTime } from 'date-fns-tz';
 
-import { NOTIFICATION_LOOKAHEAD_HOURS } from '../constants.js';
+import { NOTIFICATION_LEAD_MINUTES, TimeZone } from '../constants.js';
 
 /**
  * Gets the start and end of the current day in a specific timezone.
@@ -14,18 +15,15 @@ export function getTodayTimeWindow(timeZone: string = 'America/New_York') {
   return { start, end };
 }
 
-export function getQueryTimeWindow(): {
-  windowStartUnix: number;
-  windowEndUnix: number;
-} {
-  const timeZone = 'America/New_York';
-
-  const zonedNow = new Date(new Date().toLocaleString('en-US', { timeZone }));
-  const start = zonedNow;
-  const end = addHours(start, NOTIFICATION_LOOKAHEAD_HOURS);
-
-  return {
-    windowStartUnix: getUnixTime(start),
-    windowEndUnix: getUnixTime(end),
-  };
+/**
+ * Gets the event start time to alert for at a given time. Ignores the current seconds.
+ */
+export function getNotificationSlot(now: Date = new Date()): Date {
+  const target = addMinutes(now, NOTIFICATION_LEAD_MINUTES);
+  const minuteKey = formatInTimeZone(
+    target,
+    TimeZone.EASTERN,
+    "yyyy-MM-dd'T'HH:mm:00",
+  );
+  return fromZonedTime(minuteKey, TimeZone.EASTERN);
 }
