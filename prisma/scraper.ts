@@ -1,8 +1,11 @@
+import { load } from 'cheerio';
 import { fromZonedTime } from 'date-fns-tz';
 import 'dotenv/config';
 import { readFileSync } from 'fs';
 import cron from 'node-cron';
 import { join } from 'path';
+import { rootCertificates } from 'tls';
+import { Agent, fetch as undiciFetch } from 'undici';
 
 import { PrismaClient } from '@prisma/client';
 import {
@@ -152,6 +155,178 @@ async function fetchFreedgeDiningItems(): Promise<RawDiningItem[]> {
     console.error('Error fetching freedge data:', error);
     return [];
   }
+}
+
+const NETNUTRITION_URL =
+  'https://netnutrition.dining.cornell.edu/NetNutrition/CornellDining';
+
+// NetNutrition unitOid -> Cornell Dining API eatery id
+const NETNUTRITION_UNIT_TO_CORNELL_ID: Record<number, number> = {
+  1: 12, // Cafe Jennie
+  2: 11, // Bus Stop Bagels
+  3: 42, // Mann Cafe
+  4: 16, // Goldie's Cafe
+  5: 19, // Mattin's
+  6: 8, // Atrium Cafe
+  7: 23, // Trillium
+  8: 14, // Dairy Bar
+  9: 10, // Big Red Barn
+  10: 41, // Crossings Cafe
+  11: 18, // Martha's
+  12: 45, // College of Veterinary Medicine Cafe
+  19: 13, // Straight From The Market
+};
+
+type NetNutritionResponse = {
+  success: boolean;
+  panels: { id: string; html: string }[];
+};
+
+// Node's fetch sends "Accept-Language: *" by default, which NetNutrition
+// rejects with a start-up error page instead of the JSON responses
+const NETNUTRITION_HEADERS = { 'Accept-Language': 'en-US' };
+
+// Public "AAA Certificate Services" root (Comodo/Sectigo), expires 2028-12-31
+// SHA-256 fingerprint: D7:A7:A0:FB:5D:7E:27:31:D7:71:E9:48:4E:BC:DE:F7:
+// 1D:5F:0C:3E:0A:29:48:78:2B:C8:3E:E0:EA:69:9E:F4
+const AAA_CERTIFICATE_SERVICES_ROOT = `-----BEGIN CERTIFICATE-----
+MIIEMjCCAxqgAwIBAgIBATANBgkqhkiG9w0BAQUFADB7MQswCQYDVQQGEwJHQjEb
+MBkGA1UECAwSR3JlYXRlciBNYW5jaGVzdGVyMRAwDgYDVQQHDAdTYWxmb3JkMRow
+GAYDVQQKDBFDb21vZG8gQ0EgTGltaXRlZDEhMB8GA1UEAwwYQUFBIENlcnRpZmlj
+YXRlIFNlcnZpY2VzMB4XDTA0MDEwMTAwMDAwMFoXDTI4MTIzMTIzNTk1OVowezEL
+MAkGA1UEBhMCR0IxGzAZBgNVBAgMEkdyZWF0ZXIgTWFuY2hlc3RlcjEQMA4GA1UE
+BwwHU2FsZm9yZDEaMBgGA1UECgwRQ29tb2RvIENBIExpbWl0ZWQxITAfBgNVBAMM
+GEFBQSBDZXJ0aWZpY2F0ZSBTZXJ2aWNlczCCASIwDQYJKoZIhvcNAQEBBQADggEP
+ADCCAQoCggEBAL5AnfRu4ep2hxxNRUSOvkbIgwadwSr+GB+O5AL686tdUIoWMQua
+BtDFcCLNSS1UY8y2bmhGC1Pqy0wkwLxyTurxFa70VJoSCsN6sjNg4tqJVfMiWPPe
+3M/vg4aijJRPn2jymJBGhCfHdr/jzDUsi14HZGWCwEiwqJH5YZ92IFCokcdmtet4
+YgNW8IoaE+oxox6gmf049vYnMlhvB/VruPsUK6+3qszWY19zjNoFmag4qMsXeDZR
+rOme9Hg6jc8P2ULimAyrL58OAd7vn5lJ8S3frHRNG5i1R8XlKdH5kBjHYpy+g8cm
+ez6KJcfA3Z3mNWgQIJ2P2N7Sw4ScDV7oL8kCAwEAAaOBwDCBvTAdBgNVHQ4EFgQU
+oBEKIz6W8Qfs4q8p74Klf9AwpLQwDgYDVR0PAQH/BAQDAgEGMA8GA1UdEwEB/wQF
+MAMBAf8wewYDVR0fBHQwcjA4oDagNIYyaHR0cDovL2NybC5jb21vZG9jYS5jb20v
+QUFBQ2VydGlmaWNhdGVTZXJ2aWNlcy5jcmwwNqA0oDKGMGh0dHA6Ly9jcmwuY29t
+b2RvLm5ldC9BQUFDZXJ0aWZpY2F0ZVNlcnZpY2VzLmNybDANBgkqhkiG9w0BAQUF
+AAOCAQEACFb8AvCb6P+k+tZ7xkSAzk/ExfYAWMymtrwUSWgEdujm7l3sAg9g1o1Q
+GE8mTgHj5rCl7r+8dFRBv/38ErjHT1r0iWAFf2C3BUrz9vHCv8S5dIa2LX1rzNLz
+Rt0vxuBqw8M0Ayx9lt1awg6nCpnBBYurDC/zXDrPbDdVCYfeU0BsWO/8tqtlbgT2
+G9w84FoVxp7Z8VlIMCFlA2zs6SFz7JsDoeA3raAVGI/6ugLOpyypEBMs1OUIJqsi
+l2D4kF501KKaU73yqWjgom7C12yxow+ev+to51byrvLjKzg6CYG1a4XXvi3tPxq3
+smPi9WIsgtRqAEFQ8TmDn5XpNpaYbg==
+-----END CERTIFICATE-----`;
+
+// NetNutrition's certificate chain ends at the "AAA Certificate Services"
+// root, which Node no longer trusts, so trust it for these requests only
+const NETNUTRITION_AGENT = new Agent({
+  connect: {
+    ca: [...rootCertificates, AAA_CERTIFICATE_SERVICES_ROOT],
+  },
+});
+
+async function startNetNutritionSession(): Promise<string> {
+  const response = await undiciFetch(NETNUTRITION_URL, {
+    dispatcher: NETNUTRITION_AGENT,
+    headers: NETNUTRITION_HEADERS,
+    redirect: 'manual',
+    signal: AbortSignal.timeout(10000),
+  });
+  return response.headers
+    .getSetCookie()
+    .map((cookie) => cookie.split(';')[0])
+    .join('; ');
+}
+
+async function getNetNutritionPanel(
+  cookie: string,
+  path: string,
+  body: Record<string, string>,
+  panelId: string,
+): Promise<string> {
+  const response = await undiciFetch(`${NETNUTRITION_URL}/${path}`, {
+    dispatcher: NETNUTRITION_AGENT,
+    method: 'POST',
+    headers: { ...NETNUTRITION_HEADERS, Cookie: cookie },
+    body: new URLSearchParams(body),
+    signal: AbortSignal.timeout(10000),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status} for ${path}`);
+  }
+
+  const data = (await response.json()) as NetNutritionResponse;
+  return data.panels.find((panel) => panel.id === panelId)?.html ?? '';
+}
+
+// Fetched once per process (on startup) and reused by scheduled runs, since
+// every run rewrites all eateries and would otherwise drop these menus
+let netNutritionMenus: Map<number, RawDiningItem[]> | null = null;
+
+async function fetchNetNutritionMenus(): Promise<Map<number, RawDiningItem[]>> {
+  const menus = new Map<number, RawDiningItem[]>();
+
+  let cookie: string;
+  try {
+    cookie = await startNetNutritionSession();
+  } catch (error) {
+    console.error('Error starting NetNutrition session:', error);
+    return menus;
+  }
+
+  // Requests must be sequential: the server tracks the selected unit per session
+  for (const [unitOid, cornellId] of Object.entries(
+    NETNUTRITION_UNIT_TO_CORNELL_ID,
+  )) {
+    try {
+      const coursesHtml = await getNetNutritionPanel(
+        cookie,
+        'Unit/SelectUnitFromUnitsList',
+        { unitOid },
+        'coursesPanel',
+      );
+      const $courses = load(coursesHtml);
+      const courses = $courses('a.cbo_nn_menuLink')
+        .toArray()
+        .map((link) => ({
+          oid: $courses(link)
+            .attr('onclick')
+            ?.match(/selectCourse\((\d+)\)/)?.[1],
+          name: $courses(link).text().trim(),
+        }));
+
+      const items: RawDiningItem[] = [];
+      for (const course of courses) {
+        if (!course.oid) continue;
+        const itemsHtml = await getNetNutritionPanel(
+          cookie,
+          'Menu/SelectCourse',
+          { oid: course.oid },
+          'itemPanel',
+        );
+        const $items = load(itemsHtml);
+        for (const link of $items('a.cbo_nn_itemHover').toArray()) {
+          const name = $items(link).text().trim();
+          if (!name) continue;
+          items.push({
+            descr: name,
+            category: course.name,
+            item: name,
+            healthy: false,
+            showCategory: true,
+          });
+        }
+      }
+
+      if (items.length > 0) {
+        menus.set(cornellId, items);
+      }
+      console.log(`   ✓ NetNutrition unit ${unitOid}: ${items.length} items`);
+    } catch (error) {
+      console.error(`   ✗ Error fetching NetNutrition unit ${unitOid}:`, error);
+    }
+  }
+
+  return menus;
 }
 
 function fetchNonDiningHallMenu(
@@ -630,6 +805,33 @@ export async function main() {
   console.log(
     `Found ${diningData.data.eateries.length} eateries from API (${apiFetchDuration}s)`,
   );
+
+  // Replace cafe menus with NetNutrition menus
+  if (!netNutritionMenus) {
+    const netNutritionStartTime = Date.now();
+    console.log('Fetching NetNutrition menus...');
+    const menus = await fetchNetNutritionMenus();
+    // Keep an empty result uncached so the next run retries
+    if (menus.size > 0) {
+      netNutritionMenus = menus;
+    }
+    const netNutritionDuration = (
+      (Date.now() - netNutritionStartTime) /
+      1000
+    ).toFixed(2);
+    console.log(
+      `✓ Fetched NetNutrition menus for ${menus.size} eateries (${netNutritionDuration}s)`,
+    );
+  } else {
+    console.log('Reusing NetNutrition menus fetched on startup');
+  }
+  for (const rawEatery of diningData.data.eateries) {
+    const items = netNutritionMenus?.get(rawEatery.id);
+    if (items) {
+      rawEatery.diningItems = items;
+    }
+  }
+  console.log();
 
   const transformStartTime = Date.now();
   const workerCount = parseInt(process.env.WORKERS || '4', 10);
