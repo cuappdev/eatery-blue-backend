@@ -258,6 +258,19 @@ async function getNetNutritionPanel(
   return data.panels.find((panel) => panel.id === panelId)?.html ?? '';
 }
 
+// Toppings, sauces and spreads are listed as items with small serving sizes
+const NETNUTRITION_ADD_ON_SERVING_SIZE =
+  /^(\.5|1|1\.5|2) oz portion$|^(slice|ounce|leaf|fluid oz|portion)$/i;
+
+function isNetNutritionMenuItem(name: string, servingSize: string): boolean {
+  return (
+    name.length > 0 &&
+    !name.startsWith('See Dining Facility') && // Link to another NetNutrition page
+    !name.endsWith(':') && // Section header, e.g. "BURGER TOPPINGS:"
+    !NETNUTRITION_ADD_ON_SERVING_SIZE.test(servingSize)
+  );
+}
+
 // Fetched once per process (on startup) and reused by scheduled runs, since
 // every run rewrites all eateries and would otherwise drop these menus
 let netNutritionMenus: Map<number, RawDiningItem[]> | null = null;
@@ -295,6 +308,7 @@ async function fetchNetNutritionMenus(): Promise<Map<number, RawDiningItem[]>> {
         }));
 
       const items: RawDiningItem[] = [];
+      let filteredCount = 0;
       for (const course of courses) {
         if (!course.oid) continue;
         const itemsHtml = await getNetNutritionPanel(
@@ -304,9 +318,14 @@ async function fetchNetNutritionMenus(): Promise<Map<number, RawDiningItem[]>> {
           'itemPanel',
         );
         const $items = load(itemsHtml);
-        for (const link of $items('a.cbo_nn_itemHover').toArray()) {
-          const name = $items(link).text().trim();
-          if (!name) continue;
+        // Each item row's cells: compare checkbox, name, serving size, servings
+        for (const row of $items('tr:has(a.cbo_nn_itemHover)').toArray()) {
+          const name = $items(row).find('a.cbo_nn_itemHover').text().trim();
+          const servingSize = $items(row).children('td').eq(2).text().trim();
+          if (!isNetNutritionMenuItem(name, servingSize)) {
+            filteredCount++;
+            continue;
+          }
           items.push({
             descr: name,
             category: course.name,
@@ -320,7 +339,9 @@ async function fetchNetNutritionMenus(): Promise<Map<number, RawDiningItem[]>> {
       if (items.length > 0) {
         menus.set(cornellId, items);
       }
-      console.log(`   ✓ NetNutrition unit ${unitOid}: ${items.length} items`);
+      console.log(
+        `   ✓ NetNutrition unit ${unitOid}: ${items.length} items (${filteredCount} filtered out)`,
+      );
     } catch (error) {
       console.error(`   ✗ Error fetching NetNutrition unit ${unitOid}:`, error);
     }
