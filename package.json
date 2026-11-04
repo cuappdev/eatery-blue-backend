@@ -15,6 +15,7 @@
     "scrape": "tsx prisma/scraper.ts",
     "scrape:scheduled": "SCHEDULED_MODE=true node dist/prisma/scraper.js",
     "studio": "prisma studio",
+    "db:up": "docker compose -f docker-compose.dev.yml up -d",
     "notifications": "tsx prisma/notificationService.ts",
     "notifications:scheduled": "SCHEDULED_MODE=true node dist/prisma/notificationService.js"
   },
