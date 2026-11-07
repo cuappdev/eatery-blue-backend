@@ -1,15 +1,14 @@
 import {
-  CampusArea,
-  EateryType,
-  EventType,
-  PaymentMethod,
-} from '@prisma/client';
-
-import {
   EATERY_IMAGES_BASE_URL,
   WEEKDAY_TO_DAY_OF_WEEK,
   Weekday,
 } from '../src/constants.js';
+import {
+  CampusArea,
+  EateryType,
+  EventType,
+  PaymentMethod,
+} from '../src/generated/prisma/client.js';
 import type {
   RawCampusArea,
   RawEateryType,
@@ -32,7 +31,9 @@ export function mapCampusArea(area: RawCampusArea): CampusArea {
     case 'South':
       return CampusArea.SOUTH;
     default:
-      console.warn(`Unknown campus area: ${area.descrshort}, defaulting to CENTRAL`);
+      console.warn(
+        `Unknown campus area: ${area.descrshort}, defaulting to CENTRAL`,
+      );
       return CampusArea.CENTRAL;
   }
 }
@@ -54,7 +55,9 @@ export function mapPaymentMethod(method: RawPayMethod): PaymentMethod {
     case 'Free':
       return PaymentMethod.FREE;
     default:
-      console.warn(`Unknown payment method: ${method.descrshort}, defaulting to CARD`);
+      console.warn(
+        `Unknown payment method: ${method.descrshort}, defaulting to CARD`,
+      );
       return PaymentMethod.CARD;
   }
 }
@@ -110,7 +113,9 @@ export function mapEventType(eventDescription: string): EventType {
     case 'Free Food':
       return EventType.GENERAL;
     default:
-      console.warn(`Unknown event type: ${eventDescription}, defaulting to GENERAL`);
+      console.warn(
+        `Unknown event type: ${eventDescription}, defaulting to GENERAL`,
+      );
       return EventType.GENERAL;
   }
 }

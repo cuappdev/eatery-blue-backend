@@ -10,7 +10,6 @@ export const requireAuth = (
   _res: Response,
   next: NextFunction,
 ) => {
-
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     throw new UnauthorizedError('No token provided or wrong format.');
