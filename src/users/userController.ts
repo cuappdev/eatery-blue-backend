@@ -235,25 +235,16 @@ export const removeFavoriteItem = async (
     const { name } = req.body;
     const { userId } = req.user!;
 
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-    });
+    // Remove atomically in the database so concurrent requests can't overwrite
+    const updatedCount = await prisma.$executeRaw`
+      UPDATE "User"
+      SET "favoritedItemNames" = array_remove("favoritedItemNames", ${name})
+      WHERE id = ${userId}
+    `;
 
-    if (!user) {
+    if (updatedCount === 0) {
       return res.status(404).json({ message: 'User not found.' });
     }
-
-    // Filter the name out of the array
-    const updatedItems = user.favoritedItemNames.filter(
-      (item) => item !== name,
-    );
-
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        favoritedItemNames: updatedItems,
-      },
-    });
 
     res.status(200).json({ message: 'Favorite item removed.' });
   } catch (error) {
