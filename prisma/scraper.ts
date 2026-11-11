@@ -7,15 +7,14 @@ import { join } from 'path';
 import { rootCertificates } from 'tls';
 import { Agent, fetch as undiciFetch } from 'undici';
 
-import { PrismaClient } from '@prisma/client';
+import { DEFAULT_IMAGE_URL } from '../src/constants.js';
+import { TimeZone } from '../src/constants.js';
 import {
   type CampusArea,
   EateryType,
   type PaymentMethod,
-} from '@prisma/client';
-
-import { DEFAULT_IMAGE_URL } from '../src/constants.js';
-import { TimeZone } from '../src/constants.js';
+} from '../src/generated/prisma/client.js';
+import { prisma } from '../src/prisma.js';
 import {
   createWeeklyDate,
   mapCampusArea,
@@ -31,8 +30,6 @@ import type {
   RawScrapedData,
   RawStaticEatery,
 } from './scraperTypes.js';
-
-const prisma = new PrismaClient();
 
 async function getDiningData(): Promise<RawScrapedData> {
   const apiUrl = process.env.CORNELL_DINING_API_URL;

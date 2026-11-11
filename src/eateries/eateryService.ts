@@ -1,9 +1,8 @@
 import { endOfDay, startOfDay } from 'date-fns';
 import { fromZonedTime, toZonedTime } from 'date-fns-tz';
 
-import type { Event } from '@prisma/client';
-
 import { TimeZone } from '../constants.js';
+import type { Event } from '../generated/prisma/client.js';
 import { NotFoundError } from '../utils/AppError.js';
 import { getAllEateriesData, refreshCacheFromDB } from '../utils/cache.js';
 import type { EateryWithEvents } from '../utils/cache.js';

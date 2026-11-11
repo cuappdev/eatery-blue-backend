@@ -12,13 +12,12 @@ RUN npm ci
 
 # Copy prisma schema and TypeScript files
 COPY prisma ./prisma/
-
-# Generate Prisma client
-RUN npx prisma generate
-
-# Copy TypeScript configuration and source code
+COPY prisma.config.ts ./
 COPY tsconfig.json ./
 COPY src ./src/
+
+# Generate does not connect, but loading the config requires a URL
+ENV DATABASE_URL=postgresql://localhost:5432/eatery_blue
 
 # Build the TypeScript application (this will compile both src/ and prisma/)
 RUN npm run build
@@ -26,22 +25,17 @@ RUN npm run build
 # Production stage
 FROM node:24-slim
 
-# Install openssl for Prisma (required for PostgreSQL)
-RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
-
 WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
 
 # Install production dependencies only
-RUN npm ci --only=production
+RUN npm ci --omit=dev
 
-# Copy Prisma files
+# Copy Prisma files for migrate deploy
 COPY prisma ./prisma/
-
-# Generate Prisma client in production
-RUN npx prisma generate
+COPY prisma.config.ts ./
 
 # Copy built application from builder stage
 COPY --from=builder /app/dist ./dist

@@ -1,9 +1,13 @@
-import admin from 'firebase-admin';
+import { cert, getApps, initializeApp } from 'firebase-admin';
+import type { ServiceAccount } from 'firebase-admin';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 
+import { getMessaging } from 'firebase-admin/messaging';
+import type { Messaging } from 'firebase-admin/messaging';
+
 function initializeFirebase() {
-  if (admin.apps.length === 0) {
+  if (getApps().length === 0) {
     try {
       const serviceAccountPath = resolve(
         process.env.FIREBASE_SERVICE_ACCOUNT_PATH ||
@@ -13,16 +17,15 @@ function initializeFirebase() {
         readFileSync(serviceAccountPath, 'utf8'),
       );
 
-      admin.initializeApp({
-        credential: admin.credential.cert(
-          serviceAccount as admin.ServiceAccount,
-        ),
+      initializeApp({
+        credential: cert(serviceAccount as ServiceAccount),
       });
       console.log('Firebase Admin initialized');
     } catch (error) {
       console.error('Failed to initialize Firebase Admin:', error);
       throw new Error(
         'Firebase configuration failed. Please check your service account file.',
+        { cause: error },
       );
     }
   }
@@ -30,5 +33,4 @@ function initializeFirebase() {
 
 initializeFirebase();
 
-export const firebaseAdmin = admin;
-export const firebaseMessaging: admin.messaging.Messaging = admin.messaging();
+export const firebaseMessaging: Messaging = getMessaging();
