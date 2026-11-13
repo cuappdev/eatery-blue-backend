@@ -13,6 +13,14 @@ if (!CBORD_BASE_URL) {
 const CBORD_USER_URL = `${CBORD_BASE_URL}/user`;
 const CBORD_AUTH_URL = `${CBORD_BASE_URL}/authentication`;
 const CBORD_COMMERCE_URL = `${CBORD_BASE_URL}/commerce`;
+const CBORD_CONFIGURATION_URL = `${CBORD_BASE_URL}/configuration`;
+
+/** Cornell's CBORD institution id, sent with `nativeStartup`. */
+const CORNELL_INSTITUTION_ID = '73116ae4-22ad-4c71-8ffd-11ba015407b1';
+
+/** Client identity sent with `nativeStartup`, matching the GET iOS app. */
+const CBORD_CLIENT_TYPE = 'ios';
+const CBORD_CLIENT_VERSION = '4.33.27';
 
 interface CbordResponse<T> {
   response: T | null;
@@ -34,6 +42,7 @@ type CbordTransaction = {
   accountName: string;
   postedDate: string;
   locationName: string;
+  patronId?: string | number;
   [key: string]: unknown;
 };
 
@@ -435,9 +444,83 @@ async function retrieveTransactionHistory(sessionId: string) {
   }));
 }
 
+/**
+ * Calls the CBORD `nativeStartup` method and returns the user's barcode seed.
+ * The seed is a payment credential: never log or persist it.
+ */
+async function retrieveBarcodeSeed(sessionId: string): Promise<string> {
+  const payload = {
+    version: '1',
+    method: 'nativeStartup',
+    params: {
+      sessionId: sessionId,
+      clientType: CBORD_CLIENT_TYPE,
+      clientVersion: CBORD_CLIENT_VERSION,
+      institutionId: CORNELL_INSTITUTION_ID,
+    },
+  };
+
+  const result = await cbordRequest<{ barcodeSeed?: unknown }>(
+    CBORD_CONFIGURATION_URL,
+    payload,
+  );
+  handleCbordException(result);
+
+  const barcodeSeed = result.response?.barcodeSeed;
+  if (typeof barcodeSeed !== 'string' || !barcodeSeed) {
+    throw new AppError(
+      'Failed to retrieve barcode seed.',
+      500,
+      ErrorCodes.BAD_REQUEST,
+    );
+  }
+
+  return barcodeSeed;
+}
+
+/**
+ * Looks up the user's patron id from their most recent transaction, since
+ * CBORD does not return it from `/user`. Returns null if the user has no
+ * transactions.
+ */
+async function retrievePatronId(sessionId: string): Promise<string | null> {
+  const payload = {
+    method: 'retrieveTransactionHistoryWithinDateRange',
+    params: {
+      paymentSystemType: 0,
+      queryCriteria: {
+        maxReturnMostRecent: 1,
+      },
+      sessionId: sessionId,
+    },
+  };
+
+  const result = await cbordRequest<{ transactions: CbordTransaction[] }>(
+    CBORD_COMMERCE_URL,
+    payload,
+  );
+  handleCbordException(result);
+
+  const patronId = result.response?.transactions?.[0]?.patronId;
+  return patronId != null ? String(patronId) : null;
+}
+
+/**
+ * Fetches everything the client needs to generate the GET barcode.
+ */
+async function retrieveBarcode(sessionId: string) {
+  const [barcodeSeed, patronId] = await Promise.all([
+    retrieveBarcodeSeed(sessionId),
+    retrievePatronId(sessionId),
+  ]);
+
+  return { barcodeSeed, patronId };
+}
+
 export const cbordService = {
   createPin,
   authenticatePin,
   retrieveAccounts,
   retrieveTransactionHistory,
+  retrieveBarcode,
 };
