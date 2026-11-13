@@ -16,3 +16,16 @@ export const getFinancials = async (
 
   res.json({ accounts, transactions });
 };
+
+export const getBarcode = async (
+  req: Request<unknown, unknown, { sessionId: string }>,
+  res: Response,
+) => {
+  const { sessionId } = req.body;
+
+  const barcode = await cbordService.retrieveBarcode(sessionId);
+
+  // The barcode seed is a payment credential, so never cache it
+  res.set('Cache-Control', 'no-store');
+  res.json(barcode);
+};
