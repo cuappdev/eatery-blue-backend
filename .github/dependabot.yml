@@ -7,8 +7,10 @@ updates:
       day: monday
       time: '09:00'
       timezone: America/New_York
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     groups:
-      dev-dependencies:
-        dependency-type: development
-      production-dependencies:
-        dependency-type: production
+      dependencies:
+        patterns:
+          - "*"
