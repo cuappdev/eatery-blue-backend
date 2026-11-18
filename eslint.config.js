@@ -11,6 +11,7 @@ export default [
       'src/generated/**/*',
       'dist/**/*',
       '*.config.js',
+      'prisma.config.ts',
       'node_modules/**/*',
     ],
   },

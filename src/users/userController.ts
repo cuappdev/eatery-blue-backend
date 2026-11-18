@@ -1,12 +1,10 @@
-import type { EventType } from '@prisma/client';
-import { Prisma } from '@prisma/client';
-
 import type { NextFunction, Request, Response } from 'express';
 
 import {
   DEFAULT_SETTINGS,
   NOTIFICATION_HUB_WINDOW_HOURS,
 } from '../constants.js';
+import { type EventType, Prisma } from '../generated/prisma/client.js';
 import { prisma } from '../prisma.js';
 import { NotFoundError } from '../utils/AppError.js';
 import { makeItemKey } from '../utils/itemKey.js';

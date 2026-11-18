@@ -1,4 +1,4 @@
-import type admin from 'firebase-admin';
+import type { MulticastMessage } from 'firebase-admin/messaging';
 
 import { firebaseMessaging } from '../firebase.js';
 import { prisma } from '../prisma.js';
@@ -17,7 +17,7 @@ export async function sendToTokens(
     return;
   }
 
-  const message: admin.messaging.MulticastMessage = {
+  const message: MulticastMessage = {
     tokens: tokens,
     notification: {
       title: title,

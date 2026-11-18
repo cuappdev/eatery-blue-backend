@@ -1,8 +1,6 @@
 import NodeCache from 'node-cache';
 import { z } from 'zod';
 
-import type { Eatery, Event } from '@prisma/client';
-
 import {
   type NextFunction,
   type Request,
@@ -10,6 +8,7 @@ import {
   Router,
 } from 'express';
 
+import type { Eatery, Event } from '../generated/prisma/client.js';
 import { validateRequest } from '../middleware/validateRequest.js';
 import { prisma } from '../prisma.js';
 import { UnauthorizedError } from './AppError.js';
