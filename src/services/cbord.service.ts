@@ -46,6 +46,29 @@ type CbordTransaction = {
   [key: string]: unknown;
 };
 
+type CbordUserInfo = {
+  id?: string;
+  firstName?: string | null;
+  middleName?: string | null;
+  lastName?: string | null;
+  email?: string | null;
+  [key: string]: unknown;
+};
+
+type CbordUserPhoto = {
+  data?: string | null; // base64
+  mimeType?: string | null;
+  [key: string]: unknown;
+};
+
+export type UserProfile = {
+  firstName: string | null;
+  middleName: string | null;
+  lastName: string | null;
+  email: string | null;
+  photo: { mimeType: string; data: string } | null;
+};
+
 /**
  * Wrapper for making requests to the CBORD API.
  * Handles network errors and JSON parsing errors.
@@ -179,24 +202,28 @@ async function authenticatePin(deviceId: string, pin: string): Promise<string> {
 }
 
 /**
- * Calls the CBORD `retrieve` method to get the user's CBORD id.
+ * Calls the CBORD `retrieve` method to get the user's profile.
  */
-async function retrieveUserId(sessionId: string): Promise<string> {
-  const payload = {
-    method: 'retrieve',
-    params: {
-      sessionId: sessionId,
-    },
-  };
-
-  const result = await cbordRequest<{ id: string }>(
+async function retrieveUserInfo(
+  sessionId: string,
+  timeoutMs?: number,
+): Promise<CbordUserInfo> {
+  const result = await cbordRequest<CbordUserInfo>(
     CBORD_USER_URL,
-    payload,
-    FALLBACK_TIMEOUT_MS,
+    { method: 'retrieve', params: { sessionId } },
+    timeoutMs,
   );
   handleCbordException(result);
 
-  return result.response!.id;
+  return result.response!;
+}
+
+/**
+ * Calls the CBORD `retrieve` method to get the user's CBORD id.
+ */
+async function retrieveUserId(sessionId: string): Promise<string> {
+  const userInfo = await retrieveUserInfo(sessionId, FALLBACK_TIMEOUT_MS);
+  return userInfo.id as string;
 }
 
 /**
@@ -517,10 +544,64 @@ async function retrieveBarcode(sessionId: string) {
   return { barcodeSeed, patronId };
 }
 
+/** Max time to wait for the profile photo before returning without it. */
+const PROFILE_PHOTO_TIMEOUT_MS = 5000;
+
+/** Turns a missing, non-string or blank value into null. */
+function cleanString(value: unknown): string | null {
+  return typeof value === 'string' && value.trim() ? value.trim() : null;
+}
+
+/**
+ * Calls the CBORD `retrieveUserPhoto` method. A null `photoId` returns the
+ * user's approved photo. Returns null if there is no photo.
+ * The photo is personal data: never log it.
+ */
+async function retrieveUserPhoto(
+  sessionId: string,
+): Promise<UserProfile['photo']> {
+  const result = await cbordRequest<CbordUserPhoto>(
+    CBORD_USER_URL,
+    { method: 'retrieveUserPhoto', params: { sessionId, photoId: null } },
+    PROFILE_PHOTO_TIMEOUT_MS,
+  );
+  handleCbordException(result);
+
+  const data = cleanString(result.response?.data);
+  const mimeType = cleanString(result.response?.mimeType);
+  return data && mimeType ? { mimeType, data } : null;
+}
+
+/**
+ * Fetches the user's name, email and photo. Fails if `retrieve` fails;
+ * a failed photo lookup only sets `photo` to null.
+ */
+async function retrieveProfile(sessionId: string): Promise<UserProfile> {
+  const [userInfo, photo] = await Promise.all([
+    retrieveUserInfo(sessionId),
+    retrieveUserPhoto(sessionId).catch((error) => {
+      console.error(
+        'Profile photo lookup failed:',
+        error instanceof Error ? error.message : error,
+      );
+      return null;
+    }),
+  ]);
+
+  return {
+    firstName: cleanString(userInfo.firstName),
+    middleName: cleanString(userInfo.middleName),
+    lastName: cleanString(userInfo.lastName),
+    email: cleanString(userInfo.email),
+    photo,
+  };
+}
+
 export const cbordService = {
   createPin,
   authenticatePin,
   retrieveAccounts,
   retrieveTransactionHistory,
   retrieveBarcode,
+  retrieveProfile,
 };
