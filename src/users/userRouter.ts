@@ -16,11 +16,12 @@ import {
   setItemPreference,
   updateSettings,
 } from './userController.js';
-import { getMe } from './userController.js';
+import { getMe, getProfile } from './userController.js';
 import {
   favoriteEaterySchema,
   favoriteItemSchema,
   fcmTokenSchema,
+  getProfileSchema,
   itemPreferenceSchema,
   notificationIdsSchema,
   updateSettingsSchema,
@@ -29,6 +30,7 @@ import {
 const router = Router();
 
 router.get('/me', getMe);
+router.post('/get-profile', validateRequest(getProfileSchema), getProfile);
 router.post('/fcm-token', validateRequest(fcmTokenSchema), addFcmToken);
 router.delete('/fcm-token', validateRequest(fcmTokenSchema), removeFcmToken);
 

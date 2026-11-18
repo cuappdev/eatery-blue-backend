@@ -6,6 +6,7 @@ import {
 } from '../constants.js';
 import { type EventType, Prisma } from '../generated/prisma/client.js';
 import { prisma } from '../prisma.js';
+import { cbordService } from '../services/cbord.service.js';
 import { NotFoundError } from '../utils/AppError.js';
 import { makeItemKey } from '../utils/itemKey.js';
 import { getTodayTimeWindow } from '../utils/time.js';
@@ -43,6 +44,20 @@ export const getMe = async (req: Request, res: Response) => {
   return res.json({
     user: user && { ...user, settings: user.settings ?? DEFAULT_SETTINGS },
   });
+};
+
+/**
+ * Returns the user's GET profile (name, email, photo) from CBORD.
+ */
+export const getProfile = async (
+  req: Request<unknown, unknown, { sessionId: string }>,
+  res: Response,
+) => {
+  const profile = await cbordService.retrieveProfile(req.body.sessionId);
+
+  // Personal data: never cache
+  res.set('Cache-Control', 'no-store');
+  res.json(profile);
 };
 
 /**

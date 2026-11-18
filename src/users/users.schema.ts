@@ -45,3 +45,9 @@ export const favoriteEaterySchema = z.object({
     cornellId: z.number().int('cornellId must be an integer'),
   }),
 });
+
+export const getProfileSchema = z.object({
+  body: z.object({
+    sessionId: z.string().nonempty('Session ID is required'),
+  }),
+});
