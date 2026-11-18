@@ -25,6 +25,9 @@ RUN npm run build
 # Production stage
 FROM node:24-slim
 
+# Prisma engines need OpenSSL at runtime
+RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
 # Copy package files
