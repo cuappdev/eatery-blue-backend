@@ -1,10 +1,9 @@
-import { cert, getApps, initializeApp } from 'firebase-admin';
 import type { ServiceAccount } from 'firebase-admin';
+import { cert, getApps, initializeApp } from 'firebase-admin';
+import type { Messaging } from 'firebase-admin/messaging';
+import { getMessaging } from 'firebase-admin/messaging';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
-
-import { getMessaging } from 'firebase-admin/messaging';
-import type { Messaging } from 'firebase-admin/messaging';
 
 function initializeFirebase() {
   if (getApps().length === 0) {

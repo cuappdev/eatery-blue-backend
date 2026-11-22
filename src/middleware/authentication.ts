@@ -1,6 +1,5 @@
-import jwt from 'jsonwebtoken';
-
 import type { NextFunction, Request, Response } from 'express';
+import jwt from 'jsonwebtoken';
 
 import type { AuthJwtPayload } from '../types/express/index.js';
 import { UnauthorizedError } from '../utils/AppError.js';

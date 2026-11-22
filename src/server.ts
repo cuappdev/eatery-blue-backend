@@ -1,8 +1,8 @@
 import 'dotenv/config';
-import helmet from 'helmet';
+import type { Request, Response } from 'express';
 
 import express from 'express';
-import type { Request, Response } from 'express';
+import helmet from 'helmet';
 
 import authRouter from './auth/authRouter.js';
 import eateryRouter from './eateries/eateryRouter.js';

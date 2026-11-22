@@ -7,7 +7,9 @@ import {
   addFcmToken,
   deleteNotifications,
   getFavoriteMatches,
+  getMe,
   getNotifications,
+  getProfile,
   getSettings,
   markNotificationsRead,
   removeFavoriteEatery,
@@ -16,7 +18,6 @@ import {
   setItemPreference,
   updateSettings,
 } from './userController.js';
-import { getMe, getProfile } from './userController.js';
 import {
   favoriteEaterySchema,
   favoriteItemSchema,
