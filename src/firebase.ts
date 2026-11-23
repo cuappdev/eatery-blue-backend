@@ -1,9 +1,9 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import type { ServiceAccount } from 'firebase-admin';
 import { cert, getApps, initializeApp } from 'firebase-admin';
 import type { Messaging } from 'firebase-admin/messaging';
 import { getMessaging } from 'firebase-admin/messaging';
-import { readFileSync } from 'fs';
-import { resolve } from 'path';
 
 function initializeFirebase() {
   if (getApps().length === 0) {

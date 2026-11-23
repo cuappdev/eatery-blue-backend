@@ -97,7 +97,7 @@ export const removeFcmToken = async (
     });
     res.status(200).json({ message: 'Token removed successfully.' });
   } catch (e) {
-    res.status(200).json({ message: 'Token removal processed. Error: ' + e });
+    res.status(200).json({ message: `Token removal processed. Error: ${e}` });
   }
 };
 
