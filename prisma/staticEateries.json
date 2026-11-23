@@ -360,9 +360,7 @@
           ]
         }
       ],
-      "datesClosed": [
-        "09/06/21"
-      ],
+      "datesClosed": ["09/06/21"],
       "payMethods": [
         {
           "descr": "Cash",
@@ -410,7 +408,7 @@
       "about": "",
       "cornellDining": false,
       "contactPhone": "1-607-227-5391",
-      "latitude": 42.4450,
+      "latitude": 42.445,
       "longitude": -76.4811,
       "campusArea": {
         "descr": "Central Campus",

@@ -1,6 +1,5 @@
-import jwt from 'jsonwebtoken';
-
 import type { NextFunction, Request, Response } from 'express';
+import jwt from 'jsonwebtoken';
 
 import type { AuthJwtPayload } from '../types/express/index.js';
 import { UnauthorizedError } from '../utils/AppError.js';
@@ -11,7 +10,7 @@ export const requireAuth = (
   next: NextFunction,
 ) => {
   const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  if (!authHeader?.startsWith('Bearer ')) {
     throw new UnauthorizedError('No token provided or wrong format.');
   }
 

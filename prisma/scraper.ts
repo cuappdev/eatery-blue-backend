@@ -1,14 +1,12 @@
 import { load } from 'cheerio';
 import { fromZonedTime } from 'date-fns-tz';
 import 'dotenv/config';
-import { readFileSync } from 'fs';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { rootCertificates } from 'node:tls';
 import cron from 'node-cron';
-import { join } from 'path';
-import { rootCertificates } from 'tls';
 import { Agent, fetch as undiciFetch } from 'undici';
-
-import { DEFAULT_IMAGE_URL } from '../src/constants.js';
-import { TimeZone } from '../src/constants.js';
+import { DEFAULT_IMAGE_URL, TimeZone } from '../src/constants.js';
 import {
   type CampusArea,
   EateryType,

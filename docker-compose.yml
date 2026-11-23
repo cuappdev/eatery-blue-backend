@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   app:
@@ -13,7 +13,7 @@ services:
         aliases:
           - app
     ports:
-      - '127.0.0.1:8000:8000'
+      - "127.0.0.1:8000:8000"
     depends_on:
       - scraper
     restart: unless-stopped
@@ -24,7 +24,7 @@ services:
     networks:
       - eatery-network
     command:
-      ['sh', '-c', 'npx prisma migrate deploy && npm run scrape:scheduled']
+      ["sh", "-c", "npx prisma migrate deploy && npm run scrape:scheduled"]
     restart: unless-stopped
 
   notifications:
@@ -34,7 +34,7 @@ services:
       - ./firebase-service-account.json:/app/firebase-service-account.json
     networks:
       - eatery-network
-    command: ['npm', 'run', 'notifications:scheduled']
+    command: ["npm", "run", "notifications:scheduled"]
     restart: unless-stopped
 
 networks:
